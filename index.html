@@ -1,779 +1,901 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>obs-relay API Reference</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;700;800&display=swap');
-
-  :root {
-    --bg: #0a0a0f;
-    --bg2: #0f0f18;
-    --bg3: #13131e;
-    --border: #1e1e2e;
-    --border2: #2a2a3e;
-    --text: #e8e8f0;
-    --muted: #6b6b88;
-    --accent: #7c6fff;
-    --accent2: #4fc3f7;
-    --green: #4ade80;
-    --orange: #fb923c;
-    --red: #f87171;
-    --yellow: #facc15;
-    --pink: #f472b6;
-
-    --get: #4ade80;
-    --post: #7c6fff;
-    --delete: #f87171;
-    --ws: #4fc3f7;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  html { scroll-behavior: smooth; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Syne', sans-serif;
-    font-size: 15px;
-    line-height: 1.6;
-    display: flex;
-    min-height: 100vh;
-  }
-
-  /* ── Sidebar ── */
-  nav {
-    width: 260px;
-    min-width: 260px;
-    background: var(--bg2);
-    border-right: 1px solid var(--border);
-    height: 100vh;
-    position: sticky;
-    top: 0;
-    overflow-y: auto;
-    padding: 28px 0 40px;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border2) transparent;
-  }
-
-  .nav-logo {
-    padding: 0 24px 24px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 20px;
-  }
-
-  .nav-logo .logo-top {
-    font-size: 11px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 4px;
-  }
-
-  .nav-logo .logo-name {
-    font-size: 20px;
-    font-weight: 800;
-    color: var(--text);
-    letter-spacing: -0.02em;
-  }
-
-  .nav-logo .logo-name span { color: var(--accent); }
-
-  .nav-version {
-    display: inline-block;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    background: var(--border);
-    color: var(--muted);
-    padding: 2px 7px;
-    border-radius: 3px;
-    margin-top: 6px;
-  }
-
-  nav section { margin-bottom: 8px; }
-
-  .nav-section-label {
-    font-size: 10px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--muted);
-    padding: 8px 24px 6px;
-    font-weight: 600;
-  }
-
-  nav a {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 7px 24px;
-    color: var(--muted);
-    text-decoration: none;
-    font-size: 13px;
-    transition: all 0.15s;
-    border-left: 2px solid transparent;
-  }
-
-  nav a:hover {
-    color: var(--text);
-    background: var(--bg3);
-    border-left-color: var(--border2);
-  }
-
-  nav a.active {
-    color: var(--accent);
-    border-left-color: var(--accent);
-    background: rgba(124,111,255,0.07);
-  }
-
-  .method-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  .dot-get { background: var(--get); }
-  .dot-post { background: var(--post); }
-  .dot-delete { background: var(--red); }
-  .dot-ws { background: var(--ws); }
-
-  /* ── Main content ── */
-  main {
-    flex: 1;
-    max-width: 900px;
-    padding: 48px 52px;
-    overflow-x: hidden;
-  }
-
-  /* ── Page header ── */
-  .page-header {
-    margin-bottom: 52px;
-    padding-bottom: 32px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .page-header h1 {
-    font-size: 38px;
-    font-weight: 800;
-    letter-spacing: -0.03em;
-    margin-bottom: 12px;
-    line-height: 1.1;
-  }
-
-  .page-header h1 span { color: var(--accent); }
-
-  .page-header p {
-    color: var(--muted);
-    font-size: 16px;
-    max-width: 560px;
-    line-height: 1.7;
-  }
-
-  .base-url-bar {
-    margin-top: 20px;
-    display: inline-flex;
-    align-items: center;
-    gap: 0;
-    background: var(--bg3);
-    border: 1px solid var(--border2);
-    border-radius: 8px;
-    overflow: hidden;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-  }
-
-  .base-url-bar .label {
-    background: var(--border);
-    color: var(--muted);
-    padding: 9px 14px;
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-
-  .base-url-bar .url {
-    padding: 9px 16px;
-    color: var(--accent2);
-  }
-
-  /* ── Sections ── */
-  .api-section {
-    margin-bottom: 60px;
-  }
-
-  .section-header {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 28px;
-    padding-bottom: 14px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .section-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 17px;
-    flex-shrink: 0;
-  }
-
-  .section-header h2 {
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-  }
-
-  .section-desc {
-    color: var(--muted);
-    font-size: 13.5px;
-    margin-top: 2px;
-  }
-
-  /* ── Concept box ── */
-  .concept-box {
-    background: var(--bg3);
-    border: 1px solid var(--border2);
-    border-left: 3px solid var(--accent);
-    border-radius: 8px;
-    padding: 18px 20px;
-    margin-bottom: 24px;
-    font-size: 14px;
-    color: #c0c0d8;
-    line-height: 1.75;
-  }
-
-  .concept-box strong { color: var(--text); }
-
-  /* ── Endpoint card ── */
-  .endpoint {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    margin-bottom: 20px;
-    overflow: hidden;
-    transition: border-color 0.2s;
-  }
-
-  .endpoint:hover { border-color: var(--border2); }
-
-  .endpoint-header {
-    display: flex;
-    align-items: flex-start;
-    gap: 14px;
-    padding: 16px 20px;
-    cursor: pointer;
-    user-select: none;
-  }
-
-  .method-badge {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    padding: 4px 9px;
-    border-radius: 5px;
-    flex-shrink: 0;
-    margin-top: 1px;
-    text-transform: uppercase;
-  }
-
-  .badge-get    { background: rgba(74,222,128,0.12); color: var(--get); }
-  .badge-post   { background: rgba(124,111,255,0.12); color: var(--post); }
-  .badge-delete { background: rgba(248,113,113,0.12); color: var(--red); }
-  .badge-ws     { background: rgba(79,195,247,0.12); color: var(--ws); }
-
-  .endpoint-path {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 14px;
-    color: var(--text);
-    font-weight: 400;
-    margin-bottom: 3px;
-  }
-
-  .endpoint-path .param { color: var(--orange); }
-
-  .endpoint-desc {
-    font-size: 13px;
-    color: var(--muted);
-  }
-
-  .endpoint-body {
-    padding: 0 20px 20px;
-    border-top: 1px solid var(--border);
-  }
-
-  /* ── Code blocks ── */
-  .code-group { margin-top: 16px; }
-
-  .code-tabs {
-    display: flex;
-    gap: 2px;
-    margin-bottom: -1px;
-  }
-
-  .code-tab {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    padding: 6px 14px;
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-bottom: none;
-    color: var(--muted);
-    cursor: pointer;
-    border-radius: 5px 5px 0 0;
-    transition: all 0.15s;
-  }
-
-  .code-tab.active {
-    background: #161622;
-    color: var(--text);
-    border-color: var(--border2);
-  }
-
-  pre {
-    background: #161622;
-    border: 1px solid var(--border2);
-    border-radius: 0 6px 6px 6px;
-    padding: 16px 18px;
-    overflow-x: auto;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12.5px;
-    line-height: 1.7;
-    color: #c9d1d9;
-    white-space: pre;
-  }
-
-  .c-comment { color: #555577; }
-  .c-method  { color: var(--accent); }
-  .c-url     { color: var(--accent2); }
-  .c-key     { color: var(--pink); }
-  .c-str     { color: var(--green); }
-  .c-num     { color: var(--orange); }
-  .c-kw      { color: var(--yellow); }
-  .c-resp    { color: #888; }
-
-  /* ── Response block ── */
-  .response-label {
-    font-size: 11px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin: 14px 0 6px;
-    font-family: 'JetBrains Mono', monospace;
-  }
-
-  pre.response {
-    border-left: 2px solid var(--green);
-    border-radius: 0 6px 6px 0;
-  }
-
-  /* ── Params table ── */
-  .params-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-    margin: 14px 0;
-  }
-
-  .params-table th {
-    text-align: left;
-    font-size: 10px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--muted);
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--border);
-    font-family: 'JetBrains Mono', monospace;
-  }
-
-  .params-table td {
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--border);
-    vertical-align: top;
-  }
-
-  .params-table tr:last-child td { border-bottom: none; }
-
-  .param-name {
-    font-family: 'JetBrains Mono', monospace;
-    color: var(--orange);
-    font-size: 12px;
-  }
-
-  .param-type {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    color: var(--accent);
-    background: rgba(124,111,255,0.1);
-    padding: 1px 6px;
-    border-radius: 3px;
-  }
-
-  .param-required {
-    font-size: 10px;
-    color: var(--red);
-    font-weight: 600;
-  }
-
-  .param-optional {
-    font-size: 10px;
-    color: var(--muted);
-  }
-
-  .param-desc { color: #aaa; }
-
-  /* ── Info callout ── */
-  .callout {
-    display: flex;
-    gap: 12px;
-    padding: 13px 16px;
-    border-radius: 7px;
-    font-size: 13px;
-    margin: 14px 0;
-    line-height: 1.6;
-  }
-
-  .callout-info  { background: rgba(79,195,247,0.07); border: 1px solid rgba(79,195,247,0.2); color: #a0cfe8; }
-  .callout-warn  { background: rgba(250,204,21,0.06); border: 1px solid rgba(250,204,21,0.2); color: #c8aa60; }
-  .callout-tip   { background: rgba(74,222,128,0.06); border: 1px solid rgba(74,222,128,0.18); color: #78c896; }
-
-  .callout-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
-
-  /* ── Inline code ── */
-  code {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    background: var(--bg3);
-    border: 1px solid var(--border2);
-    padding: 1px 6px;
-    border-radius: 3px;
-    color: var(--accent2);
-  }
-
-  /* ── WS commands ── */
-  .ws-cmd {
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    margin-bottom: 14px;
-    overflow: hidden;
-  }
-
-  .ws-cmd-header {
-    padding: 10px 16px;
-    background: rgba(79,195,247,0.05);
-    border-bottom: 1px solid var(--border);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    color: var(--accent2);
-  }
-
-  .ws-cmd pre {
-    border: none;
-    border-radius: 0;
-    margin: 0;
-    padding: 12px 16px;
-  }
-
-  /* ── OSC table ── */
-  .osc-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-    margin: 14px 0;
-  }
-
-  .osc-table th {
-    text-align: left;
-    font-size: 10px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--muted);
-    padding: 8px 14px;
-    border-bottom: 1px solid var(--border);
-    font-family: 'JetBrains Mono', monospace;
-  }
-
-  .osc-table td {
-    padding: 9px 14px;
-    border-bottom: 1px solid var(--border);
-    vertical-align: middle;
-  }
-
-  .osc-table tr:last-child td { border-bottom: none; }
-  .osc-table tr:hover td { background: rgba(255,255,255,0.015); }
-
-  .osc-addr {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    color: var(--accent2);
-  }
-
-  .osc-val {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    color: var(--orange);
-  }
-
-  .tag {
-    display: inline-block;
-    font-size: 10px;
-    padding: 2px 7px;
-    border-radius: 3px;
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: 600;
-  }
-
-  .tag-send { background: rgba(124,111,255,0.15); color: var(--accent); }
-  .tag-recv { background: rgba(74,222,128,0.12); color: var(--green); }
-
-  /* scrollbar */
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
-
-  @media (max-width: 900px) {
-    nav { display: none; }
-    main { padding: 28px 20px; }
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>obs-relay API Reference</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;700;800&display=swap');
+         :root {
+            --bg: #0a0a0f;
+            --bg2: #0f0f18;
+            --bg3: #13131e;
+            --border: #1e1e2e;
+            --border2: #2a2a3e;
+            --text: #e8e8f0;
+            --muted: #6b6b88;
+            --accent: #7c6fff;
+            --accent2: #4fc3f7;
+            --green: #4ade80;
+            --orange: #fb923c;
+            --red: #f87171;
+            --yellow: #facc15;
+            --pink: #f472b6;
+            --get: #4ade80;
+            --post: #7c6fff;
+            --delete: #f87171;
+            --ws: #4fc3f7;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Syne', sans-serif;
+            font-size: 15px;
+            line-height: 1.6;
+            display: flex;
+            min-height: 100vh;
+        }
+        /* ── Sidebar ── */
+        
+        nav {
+            width: 260px;
+            min-width: 260px;
+            background: var(--bg2);
+            border-right: 1px solid var(--border);
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            overflow-y: auto;
+            padding: 28px 0 40px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border2) transparent;
+        }
+        
+        .nav-logo {
+            padding: 0 24px 24px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        
+        .nav-logo .logo-top {
+            font-size: 11px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+        
+        .nav-logo .logo-name {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--text);
+            letter-spacing: -0.02em;
+        }
+        
+        .nav-logo .logo-name span {
+            color: var(--accent);
+        }
+        
+        .nav-version {
+            display: inline-block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            background: var(--border);
+            color: var(--muted);
+            padding: 2px 7px;
+            border-radius: 3px;
+            margin-top: 6px;
+        }
+        
+        nav section {
+            margin-bottom: 8px;
+        }
+        
+        .nav-section-label {
+            font-size: 10px;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--muted);
+            padding: 8px 24px 6px;
+            font-weight: 600;
+        }
+        
+        nav a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 24px;
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 13px;
+            transition: all 0.15s;
+            border-left: 2px solid transparent;
+        }
+        
+        nav a:hover {
+            color: var(--text);
+            background: var(--bg3);
+            border-left-color: var(--border2);
+        }
+        
+        nav a.active {
+            color: var(--accent);
+            border-left-color: var(--accent);
+            background: rgba(124, 111, 255, 0.07);
+        }
+        
+        .method-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        
+        .dot-get {
+            background: var(--get);
+        }
+        
+        .dot-post {
+            background: var(--post);
+        }
+        
+        .dot-delete {
+            background: var(--red);
+        }
+        
+        .dot-ws {
+            background: var(--ws);
+        }
+        /* ── Main content ── */
+        
+        main {
+            flex: 1;
+            max-width: 900px;
+            padding: 48px 52px;
+            overflow-x: hidden;
+        }
+        /* ── Page header ── */
+        
+        .page-header {
+            margin-bottom: 52px;
+            padding-bottom: 32px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .page-header h1 {
+            font-size: 38px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 12px;
+            line-height: 1.1;
+        }
+        
+        .page-header h1 span {
+            color: var(--accent);
+        }
+        
+        .page-header p {
+            color: var(--muted);
+            font-size: 16px;
+            max-width: 560px;
+            line-height: 1.7;
+        }
+        
+        .base-url-bar {
+            margin-top: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0;
+            background: var(--bg3);
+            border: 1px solid var(--border2);
+            border-radius: 8px;
+            overflow: hidden;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+        }
+        
+        .base-url-bar .label {
+            background: var(--border);
+            color: var(--muted);
+            padding: 9px 14px;
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+        
+        .base-url-bar .url {
+            padding: 9px 16px;
+            color: var(--accent2);
+        }
+        /* ── Sections ── */
+        
+        .api-section {
+            margin-bottom: 60px;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 28px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .section-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            flex-shrink: 0;
+        }
+        
+        .section-header h2 {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        
+        .section-desc {
+            color: var(--muted);
+            font-size: 13.5px;
+            margin-top: 2px;
+        }
+        /* ── Concept box ── */
+        
+        .concept-box {
+            background: var(--bg3);
+            border: 1px solid var(--border2);
+            border-left: 3px solid var(--accent);
+            border-radius: 8px;
+            padding: 18px 20px;
+            margin-bottom: 24px;
+            font-size: 14px;
+            color: #c0c0d8;
+            line-height: 1.75;
+        }
+        
+        .concept-box strong {
+            color: var(--text);
+        }
+        /* ── Endpoint card ── */
+        
+        .endpoint {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+        
+        .endpoint:hover {
+            border-color: var(--border2);
+        }
+        
+        .endpoint-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 16px 20px;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .method-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            padding: 4px 9px;
+            border-radius: 5px;
+            flex-shrink: 0;
+            margin-top: 1px;
+            text-transform: uppercase;
+        }
+        
+        .badge-get {
+            background: rgba(74, 222, 128, 0.12);
+            color: var(--get);
+        }
+        
+        .badge-post {
+            background: rgba(124, 111, 255, 0.12);
+            color: var(--post);
+        }
+        
+        .badge-delete {
+            background: rgba(248, 113, 113, 0.12);
+            color: var(--red);
+        }
+        
+        .badge-ws {
+            background: rgba(79, 195, 247, 0.12);
+            color: var(--ws);
+        }
+        
+        .endpoint-path {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            color: var(--text);
+            font-weight: 400;
+            margin-bottom: 3px;
+        }
+        
+        .endpoint-path .param {
+            color: var(--orange);
+        }
+        
+        .endpoint-desc {
+            font-size: 13px;
+            color: var(--muted);
+        }
+        
+        .endpoint-body {
+            padding: 0 20px 20px;
+            border-top: 1px solid var(--border);
+        }
+        /* ── Code blocks ── */
+        
+        .code-group {
+            margin-top: 16px;
+        }
+        
+        .code-tabs {
+            display: flex;
+            gap: 2px;
+            margin-bottom: -1px;
+        }
+        
+        .code-tab {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            padding: 6px 14px;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-bottom: none;
+            color: var(--muted);
+            cursor: pointer;
+            border-radius: 5px 5px 0 0;
+            transition: all 0.15s;
+        }
+        
+        .code-tab.active {
+            background: #161622;
+            color: var(--text);
+            border-color: var(--border2);
+        }
+        
+        pre {
+            background: #161622;
+            border: 1px solid var(--border2);
+            border-radius: 0 6px 6px 6px;
+            padding: 16px 18px;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12.5px;
+            line-height: 1.7;
+            color: #c9d1d9;
+            white-space: pre;
+        }
+        
+        .c-comment {
+            color: #555577;
+        }
+        
+        .c-method {
+            color: var(--accent);
+        }
+        
+        .c-url {
+            color: var(--accent2);
+        }
+        
+        .c-key {
+            color: var(--pink);
+        }
+        
+        .c-str {
+            color: var(--green);
+        }
+        
+        .c-num {
+            color: var(--orange);
+        }
+        
+        .c-kw {
+            color: var(--yellow);
+        }
+        
+        .c-resp {
+            color: #888;
+        }
+        /* ── Response block ── */
+        
+        .response-label {
+            font-size: 11px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin: 14px 0 6px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        pre.response {
+            border-left: 2px solid var(--green);
+            border-radius: 0 6px 6px 0;
+        }
+        /* ── Params table ── */
+        
+        .params-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin: 14px 0;
+        }
+        
+        .params-table th {
+            text-align: left;
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .params-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+        
+        .params-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .param-name {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--orange);
+            font-size: 12px;
+        }
+        
+        .param-type {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--accent);
+            background: rgba(124, 111, 255, 0.1);
+            padding: 1px 6px;
+            border-radius: 3px;
+        }
+        
+        .param-required {
+            font-size: 10px;
+            color: var(--red);
+            font-weight: 600;
+        }
+        
+        .param-optional {
+            font-size: 10px;
+            color: var(--muted);
+        }
+        
+        .param-desc {
+            color: #aaa;
+        }
+        /* ── Info callout ── */
+        
+        .callout {
+            display: flex;
+            gap: 12px;
+            padding: 13px 16px;
+            border-radius: 7px;
+            font-size: 13px;
+            margin: 14px 0;
+            line-height: 1.6;
+        }
+        
+        .callout-info {
+            background: rgba(79, 195, 247, 0.07);
+            border: 1px solid rgba(79, 195, 247, 0.2);
+            color: #a0cfe8;
+        }
+        
+        .callout-warn {
+            background: rgba(250, 204, 21, 0.06);
+            border: 1px solid rgba(250, 204, 21, 0.2);
+            color: #c8aa60;
+        }
+        
+        .callout-tip {
+            background: rgba(74, 222, 128, 0.06);
+            border: 1px solid rgba(74, 222, 128, 0.18);
+            color: #78c896;
+        }
+        
+        .callout-icon {
+            font-size: 16px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+        /* ── Inline code ── */
+        
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            background: var(--bg3);
+            border: 1px solid var(--border2);
+            padding: 1px 6px;
+            border-radius: 3px;
+            color: var(--accent2);
+        }
+        /* ── WS commands ── */
+        
+        .ws-cmd {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 14px;
+            overflow: hidden;
+        }
+        
+        .ws-cmd-header {
+            padding: 10px 16px;
+            background: rgba(79, 195, 247, 0.05);
+            border-bottom: 1px solid var(--border);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--accent2);
+        }
+        
+        .ws-cmd pre {
+            border: none;
+            border-radius: 0;
+            margin: 0;
+            padding: 12px 16px;
+        }
+        /* ── OSC table ── */
+        
+        .osc-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin: 14px 0;
+        }
+        
+        .osc-table th {
+            text-align: left;
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+            padding: 8px 14px;
+            border-bottom: 1px solid var(--border);
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .osc-table td {
+            padding: 9px 14px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+        
+        .osc-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .osc-table tr:hover td {
+            background: rgba(255, 255, 255, 0.015);
+        }
+        
+        .osc-addr {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--accent2);
+        }
+        
+        .osc-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--orange);
+        }
+        
+        .tag {
+            display: inline-block;
+            font-size: 10px;
+            padding: 2px 7px;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+        }
+        
+        .tag-send {
+            background: rgba(124, 111, 255, 0.15);
+            color: var(--accent);
+        }
+        
+        .tag-recv {
+            background: rgba(74, 222, 128, 0.12);
+            color: var(--green);
+        }
+        /* scrollbar */
+        
+         ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        
+         ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+         ::-webkit-scrollbar-thumb {
+            background: var(--border2);
+            border-radius: 3px;
+        }
+        
+        @media (max-width: 900px) {
+            nav {
+                display: none;
+            }
+            main {
+                padding: 28px 20px;
+            }
+        }
+    </style>
 </head>
+
 <body>
 
-<!-- ── SIDEBAR ─────────────────────────────────────────────── -->
-<nav>
-  <div class="nav-logo">
-    <div class="logo-top">drop-zone-ops</div>
-    <div class="logo-name">obs<span>-relay</span></div>
-    <div class="nav-version">v1.0.0</div>
-  </div>
-
-  <section>
-    <div class="nav-section-label">System</div>
-    <a href="#health"><span class="method-dot dot-get"></span>Health Check</a>
-    <a href="#obs-version"><span class="method-dot dot-get"></span>OBS Version</a>
-  </section>
-
-  <section>
-    <div class="nav-section-label">Scenes</div>
-    <a href="#scenes-list"><span class="method-dot dot-get"></span>List Scenes</a>
-    <a href="#scene-current"><span class="method-dot dot-get"></span>Current Scene</a>
-    <a href="#scene-switch"><span class="method-dot dot-post"></span>Switch Scene</a>
-    <a href="#studio-mode"><span class="method-dot dot-post"></span>Studio Mode</a>
-    <a href="#studio-transition"><span class="method-dot dot-post"></span>Transition</a>
-  </section>
-
-  <section>
-    <div class="nav-section-label">Presets</div>
-    <a href="#presets-list"><span class="method-dot dot-get"></span>List Presets</a>
-    <a href="#preset-activate"><span class="method-dot dot-post"></span>Activate Preset</a>
-  </section>
-
-  <section>
-    <div class="nav-section-label">Playlists</div>
-    <a href="#playlists-concept"><span class="method-dot dot-get"></span>How Playlists Work</a>
-    <a href="#playlists-list"><span class="method-dot dot-get"></span>List Playlists</a>
-    <a href="#playlists-status"><span class="method-dot dot-get"></span>Playback Status</a>
-    <a href="#playlist-create"><span class="method-dot dot-post"></span>Create Playlist</a>
-    <a href="#playlist-upload"><span class="method-dot dot-post"></span>Upload .m3u File</a>
-    <a href="#playlist-activate"><span class="method-dot dot-post"></span>Activate Playlist</a>
-    <a href="#playlist-next"><span class="method-dot dot-post"></span>Next Track</a>
-    <a href="#playlist-prev"><span class="method-dot dot-post"></span>Previous Track</a>
-    <a href="#playlist-seek"><span class="method-dot dot-post"></span>Seek to Position</a>
-    <a href="#playlist-delete"><span class="method-dot dot-delete"></span>Delete Playlist</a>
-  </section>
-
-  <section>
-    <div class="nav-section-label">Audio</div>
-    <a href="#volume-set"><span class="method-dot dot-post"></span>Set Volume</a>
-    <a href="#mute-set"><span class="method-dot dot-post"></span>Mute / Unmute</a>
-  </section>
-
-  <section>
-    <div class="nav-section-label">Streaming</div>
-    <a href="#stream-status"><span class="method-dot dot-get"></span>Stream Status</a>
-    <a href="#stream-start"><span class="method-dot dot-post"></span>Start Stream</a>
-    <a href="#stream-stop"><span class="method-dot dot-post"></span>Stop Stream</a>
-  </section>
-
-  <section>
-    <div class="nav-section-label">WebSocket</div>
-    <a href="#ws-connect"><span class="method-dot dot-ws"></span>Connect</a>
-    <a href="#ws-commands"><span class="method-dot dot-ws"></span>Commands</a>
-    <a href="#ws-events"><span class="method-dot dot-ws"></span>Events</a>
-  </section>
-
-  <section>
-    <div class="nav-section-label">OSC / TouchOSC</div>
-    <a href="#osc-status"><span class="method-dot dot-get"></span>OSC Status</a>
-    <a href="#osc-map"><span class="method-dot dot-ws"></span>Address Map</a>
-  </section>
-</nav>
-
-<!-- ── MAIN ───────────────────────────────────────────────── -->
-<main>
-
-  <div class="page-header">
-    <h1>obs-relay <span>API Reference</span></h1>
-    <p>Complete endpoint documentation for remote OBS control — scenes, transitions, playlists, audio, streaming, WebSocket relay, and TouchOSC bridge.</p>
-    <div class="base-url-bar">
-      <span class="label">Base URL</span>
-      <span class="url">http://localhost:8080</span>
-    </div>
-  </div>
-
-
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- SYSTEM                                                  -->
-  <!-- ═══════════════════════════════════════════════════════ -->
-
-  <div class="api-section" id="system">
-    <div class="section-header">
-      <div class="section-icon" style="background:rgba(74,222,128,0.1);">🟢</div>
-      <div>
-        <h2>System</h2>
-        <div class="section-desc">Connection health and version info</div>
-      </div>
-    </div>
-
-    <!-- Health -->
-    <div class="endpoint" id="health">
-      <div class="endpoint-header">
-        <span class="method-badge badge-get">GET</span>
-        <div>
-          <div class="endpoint-path">/health</div>
-          <div class="endpoint-desc">OBS connection status, active WebSocket clients, OSC bridge state</div>
+    <!-- ── SIDEBAR ─────────────────────────────────────────────── -->
+    <nav>
+        <div class="nav-logo">
+            <!-- <div class="logo-top">drop-zone-ops</div> -->
+            <div class="logo-top">obs<span>-relay</span></div>
+            <div class="nav-version">v1.0.0</div>
         </div>
-      </div>
-      <div class="endpoint-body">
-        <div class="code-group">
-          <pre><span class="c-method">curl</span> <span class="c-url">http://localhost:8080/health</span></pre>
+
+        <section>
+            <div class="nav-section-label">System</div>
+            <a href="#health"><span class="method-dot dot-get"></span>Health Check</a>
+            <a href="#obs-version"><span class="method-dot dot-get"></span>OBS Version</a>
+        </section>
+
+        <section>
+            <div class="nav-section-label">Scenes</div>
+            <a href="#scenes-list"><span class="method-dot dot-get"></span>List Scenes</a>
+            <a href="#scene-current"><span class="method-dot dot-get"></span>Current Scene</a>
+            <a href="#scene-switch"><span class="method-dot dot-post"></span>Switch Scene</a>
+            <a href="#studio-mode"><span class="method-dot dot-post"></span>Studio Mode</a>
+            <a href="#studio-transition"><span class="method-dot dot-post"></span>Transition</a>
+        </section>
+
+        <section>
+            <div class="nav-section-label">Presets</div>
+            <a href="#presets-list"><span class="method-dot dot-get"></span>List Presets</a>
+            <a href="#preset-activate"><span class="method-dot dot-post"></span>Activate Preset</a>
+        </section>
+
+        <section>
+            <div class="nav-section-label">Playlists</div>
+            <a href="#playlists-concept"><span class="method-dot dot-get"></span>How Playlists Work</a>
+            <a href="#playlists-list"><span class="method-dot dot-get"></span>List Playlists</a>
+            <a href="#playlists-status"><span class="method-dot dot-get"></span>Playback Status</a>
+            <a href="#playlist-create"><span class="method-dot dot-post"></span>Create Playlist</a>
+            <a href="#playlist-upload"><span class="method-dot dot-post"></span>Upload .m3u File</a>
+            <a href="#playlist-activate"><span class="method-dot dot-post"></span>Activate Playlist</a>
+            <a href="#playlist-next"><span class="method-dot dot-post"></span>Next Track</a>
+            <a href="#playlist-prev"><span class="method-dot dot-post"></span>Previous Track</a>
+            <a href="#playlist-seek"><span class="method-dot dot-post"></span>Seek to Position</a>
+            <a href="#playlist-delete"><span class="method-dot dot-delete"></span>Delete Playlist</a>
+        </section>
+
+        <section>
+            <div class="nav-section-label">Audio</div>
+            <a href="#volume-set"><span class="method-dot dot-post"></span>Set Volume</a>
+            <a href="#mute-set"><span class="method-dot dot-post"></span>Mute / Unmute</a>
+        </section>
+
+        <section>
+            <div class="nav-section-label">Streaming</div>
+            <a href="#stream-status"><span class="method-dot dot-get"></span>Stream Status</a>
+            <a href="#stream-start"><span class="method-dot dot-post"></span>Start Stream</a>
+            <a href="#stream-stop"><span class="method-dot dot-post"></span>Stop Stream</a>
+        </section>
+
+        <section>
+            <div class="nav-section-label">WebSocket</div>
+            <a href="#ws-connect"><span class="method-dot dot-ws"></span>Connect</a>
+            <a href="#ws-commands"><span class="method-dot dot-ws"></span>Commands</a>
+            <a href="#ws-events"><span class="method-dot dot-ws"></span>Events</a>
+        </section>
+
+        <section>
+            <div class="nav-section-label">OSC / TouchOSC</div>
+            <a href="#osc-status"><span class="method-dot dot-get"></span>OSC Status</a>
+            <a href="#osc-map"><span class="method-dot dot-ws"></span>Address Map</a>
+        </section>
+    </nav>
+
+    <!-- ── MAIN ───────────────────────────────────────────────── -->
+    <main>
+
+        <div class="page-header">
+            <h1>obs-relay <span>API Reference</span></h1>
+            <p>Complete endpoint documentation for remote OBS control — scenes, transitions, playlists, audio, streaming, WebSocket relay, and TouchOSC bridge.</p>
+            <div class="base-url-bar">
+                <span class="label">Base URL</span>
+                <span class="url">http://localhost:8080</span>
+            </div>
         </div>
-        <div class="response-label">Response</div>
-        <pre class="response">{
+
+
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- SYSTEM                                                  -->
+        <!-- ═══════════════════════════════════════════════════════ -->
+
+        <div class="api-section" id="system">
+            <div class="section-header">
+                <div class="section-icon" style="background:rgba(74,222,128,0.1);">🟢</div>
+                <div>
+                    <h2>System</h2>
+                    <div class="section-desc">Connection health and version info</div>
+                </div>
+            </div>
+
+            <!-- Health -->
+            <div class="endpoint" id="health">
+                <div class="endpoint-header">
+                    <span class="method-badge badge-get">GET</span>
+                    <div>
+                        <div class="endpoint-path">/health</div>
+                        <div class="endpoint-desc">OBS connection status, active WebSocket clients, OSC bridge state</div>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+                    <div class="code-group">
+                        <pre><span class="c-method">curl</span> <span class="c-url">http://localhost:8080/health</span></pre>
+                    </div>
+                    <div class="response-label">Response</div>
+                    <pre class="response">{
   <span class="c-key">"status"</span>:       <span class="c-str">"ok"</span>,
   <span class="c-key">"obs_connected"</span>: <span class="c-kw">true</span>,
   <span class="c-key">"ws_clients"</span>:    <span class="c-num">2</span>,
   <span class="c-key">"osc_active"</span>:    <span class="c-kw">true</span>
 }</pre>
-      </div>
-    </div>
+                </div>
+            </div>
 
-    <!-- Version -->
-    <div class="endpoint" id="obs-version">
-      <div class="endpoint-header">
-        <span class="method-badge badge-get">GET</span>
-        <div>
-          <div class="endpoint-path">/obs/version</div>
-          <div class="endpoint-desc">OBS Studio version, WebSocket protocol version, platform</div>
-        </div>
-      </div>
-      <div class="endpoint-body">
-        <div class="code-group">
-          <pre><span class="c-method">curl</span> <span class="c-url">http://localhost:8080/obs/version</span></pre>
-        </div>
-        <div class="response-label">Response</div>
-        <pre class="response">{
+            <!-- Version -->
+            <div class="endpoint" id="obs-version">
+                <div class="endpoint-header">
+                    <span class="method-badge badge-get">GET</span>
+                    <div>
+                        <div class="endpoint-path">/obs/version</div>
+                        <div class="endpoint-desc">OBS Studio version, WebSocket protocol version, platform</div>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+                    <div class="code-group">
+                        <pre><span class="c-method">curl</span> <span class="c-url">http://localhost:8080/obs/version</span></pre>
+                    </div>
+                    <div class="response-label">Response</div>
+                    <pre class="response">{
   <span class="c-key">"obs_version"</span>:           <span class="c-str">"30.1.2"</span>,
   <span class="c-key">"obs_web_socket_version"</span>: <span class="c-str">"5.4.2"</span>,
   <span class="c-key">"platform"</span>:              <span class="c-str">"macos"</span>
 }</pre>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- SCENES                                                  -->
-  <!-- ═══════════════════════════════════════════════════════ -->
-
-  <div class="api-section" id="scenes">
-    <div class="section-header">
-      <div class="section-icon" style="background:rgba(124,111,255,0.1);">🎬</div>
-      <div>
-        <h2>Scenes</h2>
-        <div class="section-desc">Direct OBS scene control. Scene names must match exactly what's in OBS.</div>
-      </div>
-    </div>
-
-    <div class="callout callout-info">
-      <div class="callout-icon">💡</div>
-      <div>Scene names are <strong>case-sensitive</strong> and must match your OBS scene names exactly. Use <code>GET /obs/scenes</code> to see the exact names OBS has registered.</div>
-    </div>
-
-    <!-- List Scenes -->
-    <div class="endpoint" id="scenes-list">
-      <div class="endpoint-header">
-        <span class="method-badge badge-get">GET</span>
-        <div>
-          <div class="endpoint-path">/obs/scenes</div>
-          <div class="endpoint-desc">List all scenes in OBS with their index order</div>
+                </div>
+            </div>
         </div>
-      </div>
-      <div class="endpoint-body">
-        <div class="code-group">
-          <pre><span class="c-method">curl</span> <span class="c-url">http://localhost:8080/obs/scenes</span></pre>
-        </div>
-        <div class="response-label">Response</div>
-        <pre class="response">[
+
+
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- SCENES                                                  -->
+        <!-- ═══════════════════════════════════════════════════════ -->
+
+        <div class="api-section" id="scenes">
+            <div class="section-header">
+                <div class="section-icon" style="background:rgba(124,111,255,0.1);">🎬</div>
+                <div>
+                    <h2>Scenes</h2>
+                    <div class="section-desc">Direct OBS scene control. Scene names must match exactly what's in OBS.</div>
+                </div>
+            </div>
+
+            <div class="callout callout-info">
+                <div class="callout-icon">💡</div>
+                <div>Scene names are <strong>case-sensitive</strong> and must match your OBS scene names exactly. Use <code>GET /obs/scenes</code> to see the exact names OBS has registered.</div>
+            </div>
+
+            <!-- List Scenes -->
+            <div class="endpoint" id="scenes-list">
+                <div class="endpoint-header">
+                    <span class="method-badge badge-get">GET</span>
+                    <div>
+                        <div class="endpoint-path">/obs/scenes</div>
+                        <div class="endpoint-desc">List all scenes in OBS with their index order</div>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+                    <div class="code-group">
+                        <pre><span class="c-method">curl</span> <span class="c-url">http://localhost:8080/obs/scenes</span></pre>
+                    </div>
+                    <div class="response-label">Response</div>
+                    <pre class="response">[
   { <span class="c-key">"name"</span>: <span class="c-str">"Live"</span>,        <span class="c-key">"index"</span>: <span class="c-num">0</span> },
   { <span class="c-key">"name"</span>: <span class="c-str">"BRB"</span>,         <span class="c-key">"index"</span>: <span class="c-num">1</span> },
   { <span class="c-key">"name"</span>: <span class="c-str">"Standby"</span>,     <span class="c-key">"index"</span>: <span class="c-num">2</span> },
   { <span class="c-key">"name"</span>: <span class="c-str">"Intermission"</span>, <span class="c-key">"index"</span>: <span class="c-num">3</span> },
   { <span class="c-key">"name"</span>: <span class="c-str">"EndCard"</span>,     <span class="c-key">"index"</span>: <span class="c-num">4</span> }
 ]</pre>
-      </div>
-    </div>
+                </div>
+            </div>
 
-    <!-- Current Scene -->
-    <div class="endpoint" id="scene-current">
-      <div class="endpoint-header">
-        <span class="method-badge badge-get">GET</span>
-        <div>
-          <div class="endpoint-path">/obs/scene/current</div>
-          <div class="endpoint-desc">What scene is currently on program output</div>
-        </div>
-      </div>
-      <div class="endpoint-body">
-        <div class="code-group">
-          <pre><span class="c-method">curl</span> <span class="c-url">http://localhost:8080/obs/scene/current</span></pre>
-        </div>
-        <div class="response-label">Response</div>
-        <pre class="response">{ <span class="c-key">"scene"</span>: <span class="c-str">"Live"</span> }</pre>
-      </div>
-    </div>
+            <!-- Current Scene -->
+            <div class="endpoint" id="scene-current">
+                <div class="endpoint-header">
+                    <span class="method-badge badge-get">GET</span>
+                    <div>
+                        <div class="endpoint-path">/obs/scene/current</div>
+                        <div class="endpoint-desc">What scene is currently on program output</div>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+                    <div class="code-group">
+                        <pre><span class="c-method">curl</span> <span class="c-url">http://localhost:8080/obs/scene/current</span></pre>
+                    </div>
+                    <div class="response-label">Response</div>
+                    <pre class="response">{ <span class="c-key">"scene"</span>: <span class="c-str">"Live"</span> }</pre>
+                </div>
+            </div>
 
-    <!-- Switch Scene -->
-    <div class="endpoint" id="scene-switch">
-      <div class="endpoint-header">
-        <span class="method-badge badge-post">POST</span>
-        <div>
-          <div class="endpoint-path">/obs/scene/<span class="param">{scene_name}</span></div>
-          <div class="endpoint-desc">Immediately switch to the named scene using OBS's active transition</div>
-        </div>
-      </div>
-      <div class="endpoint-body">
-        <div class="callout callout-tip">
-          <div class="callout-icon">✨</div>
-          <div>The <strong>fade/transition effect</strong> comes from OBS, not this API. Set your transition type and duration in OBS (Scene Transitions panel) — obs-relay just triggers it. A 500ms fade is a good default.</div>
-        </div>
-        <table class="params-table">
-          <tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr>
-          <tr>
-            <td class="param-name">scene_name</td>
-            <td><span class="param-type">string</span></td>
-            <td><span class="param-required">required</span></td>
-            <td class="param-desc">Exact OBS scene name (URL path segment)</td>
-          </tr>
-        </table>
-        <div class="code-group">
-          <pre><span class="c-comment"># Switch to your live scene</span>
+            <!-- Switch Scene -->
+            <div class="endpoint" id="scene-switch">
+                <div class="endpoint-header">
+                    <span class="method-badge badge-post">POST</span>
+                    <div>
+                        <div class="endpoint-path">/obs/scene/<span class="param">{scene_name}</span></div>
+                        <div class="endpoint-desc">Immediately switch to the named scene using OBS's active transition</div>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+                    <div class="callout callout-tip">
+                        <div class="callout-icon">✨</div>
+                        <div>The <strong>fade/transition effect</strong> comes from OBS, not this API. Set your transition type and duration in OBS (Scene Transitions panel) — obs-relay just triggers it. A 500ms fade is a good default.</div>
+                    </div>
+                    <table class="params-table">
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Type</th>
+                            <th>Required</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td class="param-name">scene_name</td>
+                            <td><span class="param-type">string</span></td>
+                            <td><span class="param-required">required</span></td>
+                            <td class="param-desc">Exact OBS scene name (URL path segment)</td>
+                        </tr>
+                    </table>
+                    <div class="code-group">
+                        <pre><span class="c-comment"># Switch to your live scene</span>
 <span class="c-method">curl</span> -X POST <span class="c-url">http://localhost:8080/obs/scene/Live</span>
 
 <span class="c-comment"># Switch to BRB screen</span>
@@ -781,103 +903,108 @@
 
 <span class="c-comment"># Scene names with spaces need URL encoding</span>
 <span class="c-method">curl</span> -X POST <span class="c-url">http://localhost:8080/obs/scene/My%20Scene</span></pre>
-        </div>
-        <div class="response-label">Response</div>
-        <pre class="response">{ <span class="c-key">"scene"</span>: <span class="c-str">"Live"</span>, <span class="c-key">"status"</span>: <span class="c-str">"ok"</span> }</pre>
-      </div>
-    </div>
+                    </div>
+                    <div class="response-label">Response</div>
+                    <pre class="response">{ <span class="c-key">"scene"</span>: <span class="c-str">"Live"</span>, <span class="c-key">"status"</span>: <span class="c-str">"ok"</span> }</pre>
+                </div>
+            </div>
 
-    <!-- Studio Mode -->
-    <div class="endpoint" id="studio-mode">
-      <div class="endpoint-header">
-        <span class="method-badge badge-post">POST</span>
-        <div>
-          <div class="endpoint-path">/obs/studio/enable</div>
-          <div class="endpoint-desc">Enable or disable Studio Mode (preview → program workflow)</div>
-        </div>
-      </div>
-      <div class="endpoint-body">
-        <div class="callout callout-info">
-          <div class="callout-icon">🎥</div>
-          <div>Studio Mode gives you a <strong>preview</strong> scene you can set up privately, then cut to program when ready. Great for pre-loading the next video segment without the audience seeing it.</div>
-        </div>
-        <table class="params-table">
-          <tr><th>Parameter</th><th>Type</th><th>Default</th><th>Description</th></tr>
-          <tr>
-            <td class="param-name">enabled</td>
-            <td><span class="param-type">bool</span></td>
-            <td><code>true</code></td>
-            <td class="param-desc">Query param — true to enable, false to disable</td>
-          </tr>
-        </table>
-        <div class="code-group">
-          <pre><span class="c-comment"># Enable studio mode</span>
+            <!-- Studio Mode -->
+            <div class="endpoint" id="studio-mode">
+                <div class="endpoint-header">
+                    <span class="method-badge badge-post">POST</span>
+                    <div>
+                        <div class="endpoint-path">/obs/studio/enable</div>
+                        <div class="endpoint-desc">Enable or disable Studio Mode (preview → program workflow)</div>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+                    <div class="callout callout-info">
+                        <div class="callout-icon">🎥</div>
+                        <div>Studio Mode gives you a <strong>preview</strong> scene you can set up privately, then cut to program when ready. Great for pre-loading the next video segment without the audience seeing it.</div>
+                    </div>
+                    <table class="params-table">
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Type</th>
+                            <th>Default</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td class="param-name">enabled</td>
+                            <td><span class="param-type">bool</span></td>
+                            <td><code>true</code></td>
+                            <td class="param-desc">Query param — true to enable, false to disable</td>
+                        </tr>
+                    </table>
+                    <div class="code-group">
+                        <pre><span class="c-comment"># Enable studio mode</span>
 <span class="c-method">curl</span> -X POST <span class="c-url">"http://localhost:8080/obs/studio/enable?enabled=true"</span>
 
 <span class="c-comment"># Disable studio mode</span>
 <span class="c-method">curl</span> -X POST <span class="c-url">"http://localhost:8080/obs/studio/enable?enabled=false"</span></pre>
-        </div>
-        <div class="response-label">Response</div>
-        <pre class="response">{ <span class="c-key">"studio_mode"</span>: <span class="c-kw">true</span>, <span class="c-key">"status"</span>: <span class="c-str">"ok"</span> }</pre>
-      </div>
-    </div>
+                    </div>
+                    <div class="response-label">Response</div>
+                    <pre class="response">{ <span class="c-key">"studio_mode"</span>: <span class="c-kw">true</span>, <span class="c-key">"status"</span>: <span class="c-str">"ok"</span> }</pre>
+                </div>
+            </div>
 
-    <!-- Transition -->
-    <div class="endpoint" id="studio-transition">
-      <div class="endpoint-header">
-        <span class="method-badge badge-post">POST</span>
-        <div>
-          <div class="endpoint-path">/obs/studio/transition</div>
-          <div class="endpoint-desc">Cut the preview scene to program output (Studio Mode only)</div>
-        </div>
-      </div>
-      <div class="endpoint-body">
-        <div class="code-group">
-          <pre><span class="c-comment"># Workflow: set up preview, then cut when ready</span>
+            <!-- Transition -->
+            <div class="endpoint" id="studio-transition">
+                <div class="endpoint-header">
+                    <span class="method-badge badge-post">POST</span>
+                    <div>
+                        <div class="endpoint-path">/obs/studio/transition</div>
+                        <div class="endpoint-desc">Cut the preview scene to program output (Studio Mode only)</div>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+                    <div class="code-group">
+                        <pre><span class="c-comment"># Workflow: set up preview, then cut when ready</span>
 <span class="c-method">curl</span> -X POST <span class="c-url">"http://localhost:8080/obs/studio/enable?enabled=true"</span>
 <span class="c-comment"># ... configure your preview scene in OBS ...</span>
 <span class="c-method">curl</span> -X POST <span class="c-url">http://localhost:8080/obs/studio/transition</span></pre>
+                    </div>
+                    <div class="response-label">Response</div>
+                    <pre class="response">{ <span class="c-key">"status"</span>: <span class="c-str">"transitioned"</span> }</pre>
+                </div>
+            </div>
         </div>
-        <div class="response-label">Response</div>
-        <pre class="response">{ <span class="c-key">"status"</span>: <span class="c-str">"transitioned"</span> }</pre>
-      </div>
-    </div>
-  </div>
 
 
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- PRESETS                                                 -->
-  <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- PRESETS                                                 -->
+        <!-- ═══════════════════════════════════════════════════════ -->
 
-  <div class="api-section" id="presets-section">
-    <div class="section-header">
-      <div class="section-icon" style="background:rgba(250,204,21,0.1);">⚡</div>
-      <div>
-        <h2>Scene Presets</h2>
-        <div class="section-desc">Named broadcast states that combine scene switches with side effects (auto-mute, playlist activation)</div>
-      </div>
-    </div>
+        <div class="api-section" id="presets-section">
+            <div class="section-header">
+                <div class="section-icon" style="background:rgba(250,204,21,0.1);">⚡</div>
+                <div>
+                    <h2>Scene Presets</h2>
+                    <div class="section-desc">Named broadcast states that combine scene switches with side effects (auto-mute, playlist activation)</div>
+                </div>
+            </div>
 
-    <div class="callout callout-tip">
-      <div class="callout-icon">🎯</div>
-      <div>Presets are the <strong>high-level control surface</strong> — you activate "brb" and it switches the scene, mutes the mic, and queues the BRB loop, all in one call. Configure them in <code>config.yaml</code> to match your OBS scene names.</div>
-    </div>
+            <div class="callout callout-tip">
+                <div class="callout-icon">🎯</div>
+                <div>Presets are the <strong>high-level control surface</strong> — you activate "brb" and it switches the scene, mutes the mic, and queues the BRB loop, all in one call. Configure them in <code>config.yaml</code> to match your OBS scene names.</div>
+            </div>
 
-    <!-- List Presets -->
-    <div class="endpoint" id="presets-list">
-      <div class="endpoint-header">
-        <span class="method-badge badge-get">GET</span>
-        <div>
-          <div class="endpoint-path">/presets</div>
-          <div class="endpoint-desc">List all registered scene presets and their OBS scene mappings</div>
-        </div>
-      </div>
-      <div class="endpoint-body">
-        <div class="code-group">
-          <pre><span class="c-method">curl</span> <span class="c-url">http://localhost:8080/presets</span></pre>
-        </div>
-        <div class="response-label">Response</div>
-        <pre class="response">[
+            <!-- List Presets -->
+            <div class="endpoint" id="presets-list">
+                <div class="endpoint-header">
+                    <span class="method-badge badge-get">GET</span>
+                    <div>
+                        <div class="endpoint-path">/presets</div>
+                        <div class="endpoint-desc">List all registered scene presets and their OBS scene mappings</div>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+                    <div class="code-group">
+                        <pre><span class="c-method">curl</span> <span class="c-url">http://localhost:8080/presets</span></pre>
+                    </div>
+                    <div class="response-label">Response</div>
+                    <pre class="response">[
   {
     <span class="c-key">"name"</span>:        <span class="c-str">"live"</span>,
     <span class="c-key">"scene_name"</span>:  <span class="c-str">"Live"</span>,
@@ -898,21 +1025,21 @@
   },
   <span class="c-comment">// ... standby, intermission, end_card ...</span>
 ]</pre>
-      </div>
-    </div>
+                </div>
+            </div>
 
-    <!-- Activate Preset -->
-    <div class="endpoint" id="preset-activate">
-      <div class="endpoint-header">
-        <span class="method-badge badge-post">POST</span>
-        <div>
-          <div class="endpoint-path">/presets/<span class="param">{preset_name}</span>/activate</div>
-          <div class="endpoint-desc">Activate a preset — switches scene and runs all configured side effects</div>
-        </div>
-      </div>
-      <div class="endpoint-body">
-        <div class="code-group">
-          <pre><span class="c-comment"># Go live</span>
+            <!-- Activate Preset -->
+            <div class="endpoint" id="preset-activate">
+                <div class="endpoint-header">
+                    <span class="method-badge badge-post">POST</span>
+                    <div>
+                        <div class="endpoint-path">/presets/<span class="param">{preset_name}</span>/activate</div>
+                        <div class="endpoint-desc">Activate a preset — switches scene and runs all configured side effects</div>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+                    <div class="code-group">
+                        <pre><span class="c-comment"># Go live</span>
 <span class="c-method">curl</span> -X POST <span class="c-url">http://localhost:8080/presets/live/activate</span>
 
 <span class="c-comment"># BRB (also auto-mutes Mic per preset config)</span>
@@ -926,61 +1053,63 @@
 
 <span class="c-comment"># End of show slate</span>
 <span class="c-method">curl</span> -X POST <span class="c-url">http://localhost:8080/presets/end_card/activate</span></pre>
-        </div>
-        <div class="response-label">Response</div>
-        <pre class="response">{
+                    </div>
+                    <div class="response-label">Response</div>
+                    <pre class="response">{
   <span class="c-key">"preset"</span>: <span class="c-str">"brb"</span>,
   <span class="c-key">"actions"</span>: [
     { <span class="c-key">"action"</span>: <span class="c-str">"switch_scene"</span>, <span class="c-key">"scene"</span>: <span class="c-str">"BRB"</span>, <span class="c-key">"status"</span>: <span class="c-str">"ok"</span> },
     { <span class="c-key">"action"</span>: <span class="c-str">"set_mute"</span>, <span class="c-key">"source"</span>: <span class="c-str">"Mic"</span>, <span class="c-key">"muted"</span>: <span class="c-kw">true</span>, <span class="c-key">"status"</span>: <span class="c-str">"ok"</span> }
   ]
 }</pre>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- PLAYLISTS                                               -->
-  <!-- ═══════════════════════════════════════════════════════ -->
-
-  <div class="api-section" id="playlists-section">
-    <div class="section-header">
-      <div class="section-icon" style="background:rgba(244,114,182,0.1);">📼</div>
-      <div>
-        <h2>Playlists</h2>
-        <div class="section-desc">M3U-based video playlist management with hot-swap between channels</div>
-      </div>
-    </div>
-
-    <!-- Concept explanation -->
-    <div class="concept-box" id="playlists-concept">
-      <strong>How playlists work in obs-relay:</strong><br><br>
-      A playlist is a named list of video files (or URLs). When you <em>activate</em> a playlist, obs-relay loads the first item into your OBS <strong>Media Source</strong> input. When that video finishes (or you call <code>/next</code>), obs-relay loads the next file into the same source — OBS plays it automatically.<br><br>
-      <strong>The key concept:</strong> obs-relay controls <em>what file</em> is loaded into OBS, not OBS's internal playback. You need a Media Source in OBS named <code>MediaSource</code> (or whatever you set in <code>config.yaml</code> under <code>playlist.source_name</code>). That source lives in your scene, and obs-relay keeps swapping files into it.<br><br>
-      <strong>Multiple playlists</strong> are like TV channels — you define a "main" playlist, an "intermission" playlist, a "pre-show" playlist, etc. Switching between them is like Pluto.tv changing channels.
-    </div>
-
-    <div class="callout callout-warn">
-      <div class="callout-icon">⚠️</div>
-      <div>Make sure you have a <strong>Media Source</strong> in OBS with the name matching <code>playlist.source_name</code> in your <code>config.yaml</code> (default: <code>MediaSource</code>). The source should be set to a local file. obs-relay will override that file path on each track change.</div>
-    </div>
-
-    <!-- List Playlists -->
-    <div class="endpoint" id="playlists-list">
-      <div class="endpoint-header">
-        <span class="method-badge badge-get">GET</span>
-        <div>
-          <div class="endpoint-path">/playlists</div>
-          <div class="endpoint-desc">List all loaded playlists with their tracks and metadata</div>
+                </div>
+            </div>
         </div>
-      </div>
-      <div class="endpoint-body">
-        <div class="code-group">
-          <pre><span class="c-method">curl</span> <span class="c-url">http://localhost:8080/playlists</span></pre>
-        </div>
-        <div class="response-label">Response</div>
-        <pre class="response">{
+
+
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- PLAYLISTS                                               -->
+        <!-- ═══════════════════════════════════════════════════════ -->
+
+        <div class="api-section" id="playlists-section">
+            <div class="section-header">
+                <div class="section-icon" style="background:rgba(244,114,182,0.1);">📼</div>
+                <div>
+                    <h2>Playlists</h2>
+                    <div class="section-desc">M3U-based video playlist management with hot-swap between channels</div>
+                </div>
+            </div>
+
+            <!-- Concept explanation -->
+            <div class="concept-box" id="playlists-concept">
+                <strong>How playlists work in obs-relay:</strong><br><br> A playlist is a named list of video files (or URLs). When you <em>activate</em> a playlist, obs-relay loads the first item into your OBS <strong>Media Source</strong> input. When
+                that video finishes (or you call <code>/next</code>), obs-relay loads the next file into the same source — OBS plays it automatically.<br><br>
+                <strong>The key concept:</strong> obs-relay controls <em>what file</em> is loaded into OBS, not OBS's internal playback. You need a Media Source in OBS named <code>MediaSource</code> (or whatever you set in <code>config.yaml</code> under
+                <code>playlist.source_name</code>). That source lives in your scene, and obs-relay keeps swapping files into it.<br><br>
+                <strong>Multiple playlists</strong> are like TV channels — you define a "main" playlist, an "intermission" playlist, a "pre-show" playlist, etc. Switching between them is like Pluto.tv changing channels.
+            </div>
+
+            <div class="callout callout-warn">
+                <div class="callout-icon">⚠️</div>
+                <div>Make sure you have a <strong>Media Source</strong> in OBS with the name matching <code>playlist.source_name</code> in your <code>config.yaml</code> (default: <code>MediaSource</code>). The source should be set to a local file. obs-relay
+                    will override that file path on each track change.</div>
+            </div>
+
+            <!-- List Playlists -->
+            <div class="endpoint" id="playlists-list">
+                <div class="endpoint-header">
+                    <span class="method-badge badge-get">GET</span>
+                    <div>
+                        <div class="endpoint-path">/playlists</div>
+                        <div class="endpoint-desc">List all loaded playlists with their tracks and metadata</div>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+                    <div class="code-group">
+                        <pre><span class="c-method">curl</span> <span class="c-url">http://localhost:8080/playlists</span></pre>
+                    </div>
+                    <div class="response-label">Response</div>
+                    <pre class="response">{
   <span class="c-key">"main"</span>: {
     <span class="c-key">"name"</span>:       <span class="c-str">"main"</span>,
     <span class="c-key">"item_count"</span>: <span class="c-num">6</span>,
@@ -1000,24 +1129,24 @@
     <span class="c-key">"items"</span>: [ <span class="c-comment">/* ... */</span> ]
   }
 }</pre>
-      </div>
-    </div>
+                </div>
+            </div>
 
-    <!-- Status -->
-    <div class="endpoint" id="playlists-status">
-      <div class="endpoint-header">
-        <span class="method-badge badge-get">GET</span>
-        <div>
-          <div class="endpoint-path">/playlists/status</div>
-          <div class="endpoint-desc">Current playback state — which playlist is active, which track is playing, position</div>
-        </div>
-      </div>
-      <div class="endpoint-body">
-        <div class="code-group">
-          <pre><span class="c-method">curl</span> <span class="c-url">http://localhost:8080/playlists/status</span></pre>
-        </div>
-        <div class="response-label">Response</div>
-        <pre class="response">{
+            <!-- Status -->
+            <div class="endpoint" id="playlists-status">
+                <div class="endpoint-header">
+                    <span class="method-badge badge-get">GET</span>
+                    <div>
+                        <div class="endpoint-path">/playlists/status</div>
+                        <div class="endpoint-desc">Current playback state — which playlist is active, which track is playing, position</div>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+                    <div class="code-group">
+                        <pre><span class="c-method">curl</span> <span class="c-url">http://localhost:8080/playlists/status</span></pre>
+                    </div>
+                    <div class="response-label">Response</div>
+                    <pre class="response">{
   <span class="c-key">"active_playlist"</span>: <span class="c-str">"main"</span>,
   <span class="c-key">"position"</span>:        <span class="c-num">2</span>,
   <span class="c-key">"total_items"</span>:     <span class="c-num">6</span>,
@@ -1029,48 +1158,53 @@
     <span class="c-key">"duration"</span>: <span class="c-num">3600</span>
   }
 }</pre>
-      </div>
-    </div>
+                </div>
+            </div>
 
-    <!-- Create Playlist -->
-    <div class="endpoint" id="playlist-create">
-      <div class="endpoint-header">
-        <span class="method-badge badge-post">POST</span>
-        <div>
-          <div class="endpoint-path">/playlists/create</div>
-          <div class="endpoint-desc">Create a playlist on-the-fly by sending a JSON list of file paths or URLs</div>
-        </div>
-      </div>
-      <div class="endpoint-body">
-        <table class="params-table">
-          <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
-          <tr>
-            <td class="param-name">name</td>
-            <td><span class="param-type">string</span></td>
-            <td><span class="param-required">required</span></td>
-            <td class="param-desc">Unique name for this playlist</td>
-          </tr>
-          <tr>
-            <td class="param-name">items</td>
-            <td><span class="param-type">string[]</span></td>
-            <td><span class="param-required">required</span></td>
-            <td class="param-desc">Array of local file paths or HTTP/RTMP URLs</td>
-          </tr>
-          <tr>
-            <td class="param-name">loop</td>
-            <td><span class="param-type">bool</span></td>
-            <td><span class="param-optional">optional</span></td>
-            <td class="param-desc">Loop when end is reached (default: true)</td>
-          </tr>
-          <tr>
-            <td class="param-name">save</td>
-            <td><span class="param-type">bool</span></td>
-            <td><span class="param-optional">optional</span></td>
-            <td class="param-desc">Save to disk as .m3u file (default: false)</td>
-          </tr>
-        </table>
-        <div class="code-group">
-          <pre><span class="c-comment"># Create a simple content block playlist from local files</span>
+            <!-- Create Playlist -->
+            <div class="endpoint" id="playlist-create">
+                <div class="endpoint-header">
+                    <span class="method-badge badge-post">POST</span>
+                    <div>
+                        <div class="endpoint-path">/playlists/create</div>
+                        <div class="endpoint-desc">Create a playlist on-the-fly by sending a JSON list of file paths or URLs</div>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+                    <table class="params-table">
+                        <tr>
+                            <th>Field</th>
+                            <th>Type</th>
+                            <th>Required</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td class="param-name">name</td>
+                            <td><span class="param-type">string</span></td>
+                            <td><span class="param-required">required</span></td>
+                            <td class="param-desc">Unique name for this playlist</td>
+                        </tr>
+                        <tr>
+                            <td class="param-name">items</td>
+                            <td><span class="param-type">string[]</span></td>
+                            <td><span class="param-required">required</span></td>
+                            <td class="param-desc">Array of local file paths or HTTP/RTMP URLs</td>
+                        </tr>
+                        <tr>
+                            <td class="param-name">loop</td>
+                            <td><span class="param-type">bool</span></td>
+                            <td><span class="param-optional">optional</span></td>
+                            <td class="param-desc">Loop when end is reached (default: true)</td>
+                        </tr>
+                        <tr>
+                            <td class="param-name">save</td>
+                            <td><span class="param-type">bool</span></td>
+                            <td><span class="param-optional">optional</span></td>
+                            <td class="param-desc">Save to disk as .m3u file (default: false)</td>
+                        </tr>
+                    </table>
+                    <div class="code-group">
+                        <pre><span class="c-comment"># Create a simple content block playlist from local files</span>
 <span class="c-method">curl</span> -X POST <span class="c-url">http://localhost:8080/playlists/create</span> \
   -H <span class="c-str">"Content-Type: application/json"</span> \
   -d <span class="c-str">'{
@@ -1097,36 +1231,36 @@
     ],
     "loop": true
   }'</span></pre>
-        </div>
-        <div class="response-label">Response</div>
-        <pre class="response">{
+                    </div>
+                    <div class="response-label">Response</div>
+                    <pre class="response">{
   <span class="c-key">"name"</span>:       <span class="c-str">"friday-night"</span>,
   <span class="c-key">"item_count"</span>: <span class="c-num">5</span>,
   <span class="c-key">"status"</span>:     <span class="c-str">"created"</span>
 }</pre>
-      </div>
-    </div>
+                </div>
+            </div>
 
-    <!-- Upload .m3u -->
-    <div class="endpoint" id="playlist-upload">
-      <div class="endpoint-header">
-        <span class="method-badge badge-post">POST</span>
-        <div>
-          <div class="endpoint-path">/playlists/upload</div>
-          <div class="endpoint-desc">Upload an existing .m3u or .m3u8 file from disk</div>
-        </div>
-      </div>
-      <div class="endpoint-body">
-        <div class="callout callout-info">
-          <div class="callout-icon">📁</div>
-          <div>You can also just drop .m3u files directly into the <code>playlists/</code> folder and restart the server — they're auto-loaded on startup. Upload is for adding playlists at runtime without a restart.</div>
-        </div>
-        <div class="code-group">
-          <pre><span class="c-method">curl</span> -X POST <span class="c-url">http://localhost:8080/playlists/upload</span> \
+            <!-- Upload .m3u -->
+            <div class="endpoint" id="playlist-upload">
+                <div class="endpoint-header">
+                    <span class="method-badge badge-post">POST</span>
+                    <div>
+                        <div class="endpoint-path">/playlists/upload</div>
+                        <div class="endpoint-desc">Upload an existing .m3u or .m3u8 file from disk</div>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+                    <div class="callout callout-info">
+                        <div class="callout-icon">📁</div>
+                        <div>You can also just drop .m3u files directly into the <code>playlists/</code> folder and restart the server — they're auto-loaded on startup. Upload is for adding playlists at runtime without a restart.</div>
+                    </div>
+                    <div class="code-group">
+                        <pre><span class="c-method">curl</span> -X POST <span class="c-url">http://localhost:8080/playlists/upload</span> \
   -F <span class="c-str">"file=@/path/to/my-show.m3u"</span></pre>
-        </div>
-        <div class="response-label">Example .m3u file format</div>
-        <pre><span class="c-comment">#EXTM3U</span>
+                    </div>
+                    <div class="response-label">Example .m3u file format</div>
+                    <pre><span class="c-comment">#EXTM3U</span>
 
 <span class="c-comment">#EXTINF:15,Intro Bumper</span>
 /media/intro.mp4
@@ -1136,32 +1270,37 @@
 
 <span class="c-comment">#EXTINF:-1,Outro (unknown duration)</span>
 /media/outro.mp4</pre>
-        <div class="response-label">Response</div>
-        <pre class="response">{ <span class="c-key">"name"</span>: <span class="c-str">"my-show"</span>, <span class="c-key">"item_count"</span>: <span class="c-num">3</span>, <span class="c-key">"status"</span>: <span class="c-str">"uploaded"</span> }</pre>
-      </div>
-    </div>
+                    <div class="response-label">Response</div>
+                    <pre class="response">{ <span class="c-key">"name"</span>: <span class="c-str">"my-show"</span>, <span class="c-key">"item_count"</span>: <span class="c-num">3</span>, <span class="c-key">"status"</span>: <span class="c-str">"uploaded"</span> }</pre>
+                </div>
+            </div>
 
-    <!-- Activate Playlist -->
-    <div class="endpoint" id="playlist-activate">
-      <div class="endpoint-header">
-        <span class="method-badge badge-post">POST</span>
-        <div>
-          <div class="endpoint-path">/playlists/<span class="param">{name}</span>/activate</div>
-          <div class="endpoint-desc">Switch to a playlist, loading its first (or specified) track into OBS</div>
-        </div>
-      </div>
-      <div class="endpoint-body">
-        <table class="params-table">
-          <tr><th>Parameter</th><th>Type</th><th>Default</th><th>Description</th></tr>
-          <tr>
-            <td class="param-name">position</td>
-            <td><span class="param-type">int</span></td>
-            <td><code>0</code></td>
-            <td class="param-desc">Query param — which track to start at (0-indexed)</td>
-          </tr>
-        </table>
-        <div class="code-group">
-          <pre><span class="c-comment"># Activate main playlist from track 0</span>
+            <!-- Activate Playlist -->
+            <div class="endpoint" id="playlist-activate">
+                <div class="endpoint-header">
+                    <span class="method-badge badge-post">POST</span>
+                    <div>
+                        <div class="endpoint-path">/playlists/<span class="param">{name}</span>/activate</div>
+                        <div class="endpoint-desc">Switch to a playlist, loading its first (or specified) track into OBS</div>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+                    <table class="params-table">
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Type</th>
+                            <th>Default</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td class="param-name">position</td>
+                            <td><span class="param-type">int</span></td>
+                            <td><code>0</code></td>
+                            <td class="param-desc">Query param — which track to start at (0-indexed)</td>
+                        </tr>
+                    </table>
+                    <div class="code-group">
+                        <pre><span class="c-comment"># Activate main playlist from track 0</span>
 <span class="c-method">curl</span> -X POST <span class="c-url">http://localhost:8080/playlists/main/activate</span>
 
 <span class="c-comment"># Switch to intermission playlist (Pluto.tv channel change)</span>
@@ -1172,130 +1311,135 @@
 
 <span class="c-comment"># Switch to a pre-show holding playlist</span>
 <span class="c-method">curl</span> -X POST <span class="c-url">http://localhost:8080/playlists/pre-show/activate</span></pre>
-        </div>
-        <div class="response-label">Response</div>
-        <pre class="response">{
+                    </div>
+                    <div class="response-label">Response</div>
+                    <pre class="response">{
   <span class="c-key">"playlist"</span>: <span class="c-str">"main"</span>,
   <span class="c-key">"position"</span>: <span class="c-num">0</span>,
   <span class="c-key">"track"</span>:    <span class="c-str">"Pre-Show Holding Screen"</span>
 }</pre>
-      </div>
-    </div>
+                </div>
+            </div>
 
-    <!-- Next -->
-    <div class="endpoint" id="playlist-next">
-      <div class="endpoint-header">
-        <span class="method-badge badge-post">POST</span>
-        <div>
-          <div class="endpoint-path">/playlists/next</div>
-          <div class="endpoint-desc">Advance to the next track in the active playlist. Loops back if at the end and loop=true.</div>
-        </div>
-      </div>
-      <div class="endpoint-body">
-        <div class="code-group">
-          <pre><span class="c-method">curl</span> -X POST <span class="c-url">http://localhost:8080/playlists/next</span></pre>
-        </div>
-        <div class="response-label">Response — track advanced</div>
-        <pre class="response">{ <span class="c-key">"track"</span>: <span class="c-str">"Content Block 2"</span>, <span class="c-key">"status"</span>: <span class="c-str">"advanced"</span> }</pre>
-        <div class="response-label">Response — reached end of non-looping playlist</div>
-        <pre class="response">{ <span class="c-key">"track"</span>: <span class="c-kw">null</span>, <span class="c-key">"status"</span>: <span class="c-str">"end"</span> }</pre>
-      </div>
-    </div>
+            <!-- Next -->
+            <div class="endpoint" id="playlist-next">
+                <div class="endpoint-header">
+                    <span class="method-badge badge-post">POST</span>
+                    <div>
+                        <div class="endpoint-path">/playlists/next</div>
+                        <div class="endpoint-desc">Advance to the next track in the active playlist. Loops back if at the end and loop=true.</div>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+                    <div class="code-group">
+                        <pre><span class="c-method">curl</span> -X POST <span class="c-url">http://localhost:8080/playlists/next</span></pre>
+                    </div>
+                    <div class="response-label">Response — track advanced</div>
+                    <pre class="response">{ <span class="c-key">"track"</span>: <span class="c-str">"Content Block 2"</span>, <span class="c-key">"status"</span>: <span class="c-str">"advanced"</span> }</pre>
+                    <div class="response-label">Response — reached end of non-looping playlist</div>
+                    <pre class="response">{ <span class="c-key">"track"</span>: <span class="c-kw">null</span>, <span class="c-key">"status"</span>: <span class="c-str">"end"</span> }</pre>
+                </div>
+            </div>
 
-    <!-- Prev -->
-    <div class="endpoint" id="playlist-prev">
-      <div class="endpoint-header">
-        <span class="method-badge badge-post">POST</span>
-        <div>
-          <div class="endpoint-path">/playlists/prev</div>
-          <div class="endpoint-desc">Go back to the previous track. Stops at position 0.</div>
-        </div>
-      </div>
-      <div class="endpoint-body">
-        <div class="code-group">
-          <pre><span class="c-method">curl</span> -X POST <span class="c-url">http://localhost:8080/playlists/prev</span></pre>
-        </div>
-        <div class="response-label">Response</div>
-        <pre class="response">{ <span class="c-key">"track"</span>: <span class="c-str">"Intro Bumper"</span> }</pre>
-      </div>
-    </div>
+            <!-- Prev -->
+            <div class="endpoint" id="playlist-prev">
+                <div class="endpoint-header">
+                    <span class="method-badge badge-post">POST</span>
+                    <div>
+                        <div class="endpoint-path">/playlists/prev</div>
+                        <div class="endpoint-desc">Go back to the previous track. Stops at position 0.</div>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+                    <div class="code-group">
+                        <pre><span class="c-method">curl</span> -X POST <span class="c-url">http://localhost:8080/playlists/prev</span></pre>
+                    </div>
+                    <div class="response-label">Response</div>
+                    <pre class="response">{ <span class="c-key">"track"</span>: <span class="c-str">"Intro Bumper"</span> }</pre>
+                </div>
+            </div>
 
-    <!-- Seek -->
-    <div class="endpoint" id="playlist-seek">
-      <div class="endpoint-header">
-        <span class="method-badge badge-post">POST</span>
-        <div>
-          <div class="endpoint-path">/playlists/seek/<span class="param">{position}</span></div>
-          <div class="endpoint-desc">Jump directly to a track by index (0-based). Immediately loads that file into OBS.</div>
-        </div>
-      </div>
-      <div class="endpoint-body">
-        <div class="code-group">
-          <pre><span class="c-comment"># Jump to track 0 (first track / restart)</span>
+            <!-- Seek -->
+            <div class="endpoint" id="playlist-seek">
+                <div class="endpoint-header">
+                    <span class="method-badge badge-post">POST</span>
+                    <div>
+                        <div class="endpoint-path">/playlists/seek/<span class="param">{position}</span></div>
+                        <div class="endpoint-desc">Jump directly to a track by index (0-based). Immediately loads that file into OBS.</div>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+                    <div class="code-group">
+                        <pre><span class="c-comment"># Jump to track 0 (first track / restart)</span>
 <span class="c-method">curl</span> -X POST <span class="c-url">http://localhost:8080/playlists/seek/0</span>
 
 <span class="c-comment"># Jump to track 4 (fifth item)</span>
 <span class="c-method">curl</span> -X POST <span class="c-url">http://localhost:8080/playlists/seek/4</span></pre>
+                    </div>
+                    <div class="response-label">Response</div>
+                    <pre class="response">{ <span class="c-key">"position"</span>: <span class="c-num">4</span>, <span class="c-key">"track"</span>: <span class="c-str">"Content Block 2"</span> }</pre>
+                </div>
+            </div>
+
+            <!-- Delete -->
+            <div class="endpoint" id="playlist-delete">
+                <div class="endpoint-header">
+                    <span class="method-badge badge-delete">DELETE</span>
+                    <div>
+                        <div class="endpoint-path">/playlists/<span class="param">{name}</span></div>
+                        <div class="endpoint-desc">Remove a playlist from memory and delete its .m3u file from disk</div>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+                    <div class="code-group">
+                        <pre><span class="c-method">curl</span> -X DELETE <span class="c-url">http://localhost:8080/playlists/old-show</span></pre>
+                    </div>
+                    <div class="response-label">Response</div>
+                    <pre class="response">{ <span class="c-key">"status"</span>: <span class="c-str">"deleted"</span>, <span class="c-key">"name"</span>: <span class="c-str">"old-show"</span> }</pre>
+                </div>
+            </div>
         </div>
-        <div class="response-label">Response</div>
-        <pre class="response">{ <span class="c-key">"position"</span>: <span class="c-num">4</span>, <span class="c-key">"track"</span>: <span class="c-str">"Content Block 2"</span> }</pre>
-      </div>
-    </div>
-
-    <!-- Delete -->
-    <div class="endpoint" id="playlist-delete">
-      <div class="endpoint-header">
-        <span class="method-badge badge-delete">DELETE</span>
-        <div>
-          <div class="endpoint-path">/playlists/<span class="param">{name}</span></div>
-          <div class="endpoint-desc">Remove a playlist from memory and delete its .m3u file from disk</div>
-        </div>
-      </div>
-      <div class="endpoint-body">
-        <div class="code-group">
-          <pre><span class="c-method">curl</span> -X DELETE <span class="c-url">http://localhost:8080/playlists/old-show</span></pre>
-        </div>
-        <div class="response-label">Response</div>
-        <pre class="response">{ <span class="c-key">"status"</span>: <span class="c-str">"deleted"</span>, <span class="c-key">"name"</span>: <span class="c-str">"old-show"</span> }</pre>
-      </div>
-    </div>
-  </div>
 
 
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- AUDIO                                                   -->
-  <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- AUDIO                                                   -->
+        <!-- ═══════════════════════════════════════════════════════ -->
 
-  <div class="api-section" id="audio-section">
-    <div class="section-header">
-      <div class="section-icon" style="background:rgba(79,195,247,0.1);">🔊</div>
-      <div>
-        <h2>Audio</h2>
-        <div class="section-desc">Volume and mute control for OBS sources. Source names must match OBS exactly.</div>
-      </div>
-    </div>
+        <div class="api-section" id="audio-section">
+            <div class="section-header">
+                <div class="section-icon" style="background:rgba(79,195,247,0.1);">🔊</div>
+                <div>
+                    <h2>Audio</h2>
+                    <div class="section-desc">Volume and mute control for OBS sources. Source names must match OBS exactly.</div>
+                </div>
+            </div>
 
-    <!-- Volume -->
-    <div class="endpoint" id="volume-set">
-      <div class="endpoint-header">
-        <span class="method-badge badge-post">POST</span>
-        <div>
-          <div class="endpoint-path">/obs/source/<span class="param">{source_name}</span>/volume</div>
-          <div class="endpoint-desc">Set source volume in dB. Range: -100 (silence) to 26 (amplify).</div>
-        </div>
-      </div>
-      <div class="endpoint-body">
-        <table class="params-table">
-          <tr><th>Field</th><th>Type</th><th>Range</th><th>Description</th></tr>
-          <tr>
-            <td class="param-name">volume_db</td>
-            <td><span class="param-type">float</span></td>
-            <td><code>-100 to 26</code></td>
-            <td class="param-desc">Volume in decibels. 0dB = unity gain (no change). -6dB = half perceived loudness.</td>
-          </tr>
-        </table>
-        <div class="code-group">
-          <pre><span class="c-comment"># Set Mic to unity gain (full volume)</span>
+            <!-- Volume -->
+            <div class="endpoint" id="volume-set">
+                <div class="endpoint-header">
+                    <span class="method-badge badge-post">POST</span>
+                    <div>
+                        <div class="endpoint-path">/obs/source/<span class="param">{source_name}</span>/volume</div>
+                        <div class="endpoint-desc">Set source volume in dB. Range: -100 (silence) to 26 (amplify).</div>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+                    <table class="params-table">
+                        <tr>
+                            <th>Field</th>
+                            <th>Type</th>
+                            <th>Range</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td class="param-name">volume_db</td>
+                            <td><span class="param-type">float</span></td>
+                            <td><code>-100 to 26</code></td>
+                            <td class="param-desc">Volume in decibels. 0dB = unity gain (no change). -6dB = half perceived loudness.</td>
+                        </tr>
+                    </table>
+                    <div class="code-group">
+                        <pre><span class="c-comment"># Set Mic to unity gain (full volume)</span>
 <span class="c-method">curl</span> -X POST <span class="c-url">http://localhost:8080/obs/source/Mic/volume</span> \
   -H <span class="c-str">"Content-Type: application/json"</span> \
   -d <span class="c-str">'{ "volume_db": 0 }'</span>
@@ -1309,24 +1453,24 @@
 <span class="c-method">curl</span> -X POST <span class="c-url">http://localhost:8080/obs/source/Background%20Music/volume</span> \
   -H <span class="c-str">"Content-Type: application/json"</span> \
   -d <span class="c-str">'{ "volume_db": -40 }'</span></pre>
-        </div>
-        <div class="response-label">Response</div>
-        <pre class="response">{ <span class="c-key">"source"</span>: <span class="c-str">"Mic"</span>, <span class="c-key">"volume_db"</span>: <span class="c-num">0</span>, <span class="c-key">"status"</span>: <span class="c-str">"ok"</span> }</pre>
-      </div>
-    </div>
+                    </div>
+                    <div class="response-label">Response</div>
+                    <pre class="response">{ <span class="c-key">"source"</span>: <span class="c-str">"Mic"</span>, <span class="c-key">"volume_db"</span>: <span class="c-num">0</span>, <span class="c-key">"status"</span>: <span class="c-str">"ok"</span> }</pre>
+                </div>
+            </div>
 
-    <!-- Mute -->
-    <div class="endpoint" id="mute-set">
-      <div class="endpoint-header">
-        <span class="method-badge badge-post">POST</span>
-        <div>
-          <div class="endpoint-path">/obs/source/<span class="param">{source_name}</span>/mute</div>
-          <div class="endpoint-desc">Mute or unmute an OBS audio source</div>
-        </div>
-      </div>
-      <div class="endpoint-body">
-        <div class="code-group">
-          <pre><span class="c-comment"># Mute the microphone (e.g. going to BRB)</span>
+            <!-- Mute -->
+            <div class="endpoint" id="mute-set">
+                <div class="endpoint-header">
+                    <span class="method-badge badge-post">POST</span>
+                    <div>
+                        <div class="endpoint-path">/obs/source/<span class="param">{source_name}</span>/mute</div>
+                        <div class="endpoint-desc">Mute or unmute an OBS audio source</div>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+                    <div class="code-group">
+                        <pre><span class="c-comment"># Mute the microphone (e.g. going to BRB)</span>
 <span class="c-method">curl</span> -X POST <span class="c-url">http://localhost:8080/obs/source/Mic/mute</span> \
   -H <span class="c-str">"Content-Type: application/json"</span> \
   -d <span class="c-str">'{ "muted": true }'</span>
@@ -1335,117 +1479,118 @@
 <span class="c-method">curl</span> -X POST <span class="c-url">http://localhost:8080/obs/source/Mic/mute</span> \
   -H <span class="c-str">"Content-Type: application/json"</span> \
   -d <span class="c-str">'{ "muted": false }'</span></pre>
+                    </div>
+                    <div class="response-label">Response</div>
+                    <pre class="response">{ <span class="c-key">"source"</span>: <span class="c-str">"Mic"</span>, <span class="c-key">"muted"</span>: <span class="c-kw">true</span>, <span class="c-key">"status"</span>: <span class="c-str">"ok"</span> }</pre>
+                </div>
+            </div>
         </div>
-        <div class="response-label">Response</div>
-        <pre class="response">{ <span class="c-key">"source"</span>: <span class="c-str">"Mic"</span>, <span class="c-key">"muted"</span>: <span class="c-kw">true</span>, <span class="c-key">"status"</span>: <span class="c-str">"ok"</span> }</pre>
-      </div>
-    </div>
-  </div>
 
 
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- STREAMING                                               -->
-  <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- STREAMING                                               -->
+        <!-- ═══════════════════════════════════════════════════════ -->
 
-  <div class="api-section" id="streaming-section">
-    <div class="section-header">
-      <div class="section-icon" style="background:rgba(248,113,113,0.1);">📡</div>
-      <div>
-        <h2>Streaming</h2>
-        <div class="section-desc">Start, stop, and monitor OBS stream output</div>
-      </div>
-    </div>
+        <div class="api-section" id="streaming-section">
+            <div class="section-header">
+                <div class="section-icon" style="background:rgba(248,113,113,0.1);">📡</div>
+                <div>
+                    <h2>Streaming</h2>
+                    <div class="section-desc">Start, stop, and monitor OBS stream output</div>
+                </div>
+            </div>
 
-    <!-- Stream Status -->
-    <div class="endpoint" id="stream-status">
-      <div class="endpoint-header">
-        <span class="method-badge badge-get">GET</span>
-        <div>
-          <div class="endpoint-path">/obs/stream/status</div>
-          <div class="endpoint-desc">Current stream state — live, timecode, bytes sent</div>
-        </div>
-      </div>
-      <div class="endpoint-body">
-        <div class="code-group">
-          <pre><span class="c-method">curl</span> <span class="c-url">http://localhost:8080/obs/stream/status</span></pre>
-        </div>
-        <div class="response-label">Response</div>
-        <pre class="response">{
+            <!-- Stream Status -->
+            <div class="endpoint" id="stream-status">
+                <div class="endpoint-header">
+                    <span class="method-badge badge-get">GET</span>
+                    <div>
+                        <div class="endpoint-path">/obs/stream/status</div>
+                        <div class="endpoint-desc">Current stream state — live, timecode, bytes sent</div>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+                    <div class="code-group">
+                        <pre><span class="c-method">curl</span> <span class="c-url">http://localhost:8080/obs/stream/status</span></pre>
+                    </div>
+                    <div class="response-label">Response</div>
+                    <pre class="response">{
   <span class="c-key">"active"</span>:       <span class="c-kw">true</span>,
   <span class="c-key">"reconnecting"</span>: <span class="c-kw">false</span>,
   <span class="c-key">"timecode"</span>:     <span class="c-str">"00:42:15.000"</span>,
   <span class="c-key">"bytes"</span>:        <span class="c-num">892401824</span>
 }</pre>
-      </div>
-    </div>
+                </div>
+            </div>
 
-    <!-- Start Stream -->
-    <div class="endpoint" id="stream-start">
-      <div class="endpoint-header">
-        <span class="method-badge badge-post">POST</span>
-        <div>
-          <div class="endpoint-path">/obs/stream/start</div>
-          <div class="endpoint-desc">Begin streaming to your configured RTMP destination</div>
+            <!-- Start Stream -->
+            <div class="endpoint" id="stream-start">
+                <div class="endpoint-header">
+                    <span class="method-badge badge-post">POST</span>
+                    <div>
+                        <div class="endpoint-path">/obs/stream/start</div>
+                        <div class="endpoint-desc">Begin streaming to your configured RTMP destination</div>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+                    <div class="code-group">
+                        <pre><span class="c-method">curl</span> -X POST <span class="c-url">http://localhost:8080/obs/stream/start</span></pre>
+                    </div>
+                    <div class="response-label">Response</div>
+                    <pre class="response">{ <span class="c-key">"status"</span>: <span class="c-str">"streaming_started"</span> }</pre>
+                </div>
+            </div>
+
+            <!-- Stop Stream -->
+            <div class="endpoint" id="stream-stop">
+                <div class="endpoint-header">
+                    <span class="method-badge badge-post">POST</span>
+                    <div>
+                        <div class="endpoint-path">/obs/stream/stop</div>
+                        <div class="endpoint-desc">Stop the active stream</div>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+                    <div class="code-group">
+                        <pre><span class="c-method">curl</span> -X POST <span class="c-url">http://localhost:8080/obs/stream/stop</span></pre>
+                    </div>
+                    <div class="response-label">Response</div>
+                    <pre class="response">{ <span class="c-key">"status"</span>: <span class="c-str">"streaming_stopped"</span> }</pre>
+                </div>
+            </div>
         </div>
-      </div>
-      <div class="endpoint-body">
-        <div class="code-group">
-          <pre><span class="c-method">curl</span> -X POST <span class="c-url">http://localhost:8080/obs/stream/start</span></pre>
-        </div>
-        <div class="response-label">Response</div>
-        <pre class="response">{ <span class="c-key">"status"</span>: <span class="c-str">"streaming_started"</span> }</pre>
-      </div>
-    </div>
-
-    <!-- Stop Stream -->
-    <div class="endpoint" id="stream-stop">
-      <div class="endpoint-header">
-        <span class="method-badge badge-post">POST</span>
-        <div>
-          <div class="endpoint-path">/obs/stream/stop</div>
-          <div class="endpoint-desc">Stop the active stream</div>
-        </div>
-      </div>
-      <div class="endpoint-body">
-        <div class="code-group">
-          <pre><span class="c-method">curl</span> -X POST <span class="c-url">http://localhost:8080/obs/stream/stop</span></pre>
-        </div>
-        <div class="response-label">Response</div>
-        <pre class="response">{ <span class="c-key">"status"</span>: <span class="c-str">"streaming_stopped"</span> }</pre>
-      </div>
-    </div>
-  </div>
 
 
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- WEBSOCKET                                               -->
-  <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- WEBSOCKET                                               -->
+        <!-- ═══════════════════════════════════════════════════════ -->
 
-  <div class="api-section" id="ws-section">
-    <div class="section-header">
-      <div class="section-icon" style="background:rgba(79,195,247,0.1);">⚡</div>
-      <div>
-        <h2>WebSocket Relay</h2>
-        <div class="section-desc">Persistent bidirectional connection — send commands, receive real-time events from OBS</div>
-      </div>
-    </div>
+        <div class="api-section" id="ws-section">
+            <div class="section-header">
+                <div class="section-icon" style="background:rgba(79,195,247,0.1);">⚡</div>
+                <div>
+                    <h2>WebSocket Relay</h2>
+                    <div class="section-desc">Persistent bidirectional connection — send commands, receive real-time events from OBS</div>
+                </div>
+            </div>
 
-    <div class="concept-box">
-      <strong>WebSocket vs REST:</strong> Use REST for one-shot commands from scripts and backends. Use WebSocket when you're building a UI that needs to <em>stay in sync</em> — the WS connection receives push events whenever state changes (scene switched, track changed, stream started), so your UI can update without polling.
-    </div>
+            <div class="concept-box">
+                <strong>WebSocket vs REST:</strong> Use REST for one-shot commands from scripts and backends. Use WebSocket when you're building a UI that needs to <em>stay in sync</em> — the WS connection receives push events whenever state changes (scene
+                switched, track changed, stream started), so your UI can update without polling.
+            </div>
 
-    <!-- Connect -->
-    <div class="endpoint" id="ws-connect">
-      <div class="endpoint-header">
-        <span class="method-badge badge-ws">WS</span>
-        <div>
-          <div class="endpoint-path">/ws</div>
-          <div class="endpoint-desc">Persistent WebSocket connection endpoint</div>
-        </div>
-      </div>
-      <div class="endpoint-body">
-        <div class="code-group">
-          <pre><span class="c-comment"># Connect with wscat (npm install -g wscat)</span>
+            <!-- Connect -->
+            <div class="endpoint" id="ws-connect">
+                <div class="endpoint-header">
+                    <span class="method-badge badge-ws">WS</span>
+                    <div>
+                        <div class="endpoint-path">/ws</div>
+                        <div class="endpoint-desc">Persistent WebSocket connection endpoint</div>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+                    <div class="code-group">
+                        <pre><span class="c-comment"># Connect with wscat (npm install -g wscat)</span>
 <span class="c-method">wscat</span> -c <span class="c-url">ws://localhost:8080/ws</span>
 
 <span class="c-comment"># JavaScript browser / Node.js</span>
@@ -1463,50 +1608,50 @@ ws.onopen = () => {
     <span class="c-key">params</span>: { <span class="c-key">name</span>: <span class="c-str">'brb'</span> }
   }));
 };</pre>
-        </div>
-      </div>
-    </div>
+                    </div>
+                </div>
+            </div>
 
-    <!-- Commands -->
-    <div class="endpoint" id="ws-commands">
-      <div class="endpoint-header">
-        <span class="method-badge badge-ws">WS</span>
-        <div>
-          <div class="endpoint-path">Commands — send JSON to control OBS</div>
-          <div class="endpoint-desc">Format: <code>{"cmd": "command_name", "params": {...}}</code></div>
-        </div>
-      </div>
-      <div class="endpoint-body">
+            <!-- Commands -->
+            <div class="endpoint" id="ws-commands">
+                <div class="endpoint-header">
+                    <span class="method-badge badge-ws">WS</span>
+                    <div>
+                        <div class="endpoint-path">Commands — send JSON to control OBS</div>
+                        <div class="endpoint-desc">Format: <code>{"cmd": "command_name", "params": {...}}</code></div>
+                    </div>
+                </div>
+                <div class="endpoint-body">
 
-        <div class="ws-cmd">
-          <div class="ws-cmd-header">switch_scene</div>
-          <pre>{ <span class="c-key">"cmd"</span>: <span class="c-str">"switch_scene"</span>, <span class="c-key">"params"</span>: { <span class="c-key">"scene_name"</span>: <span class="c-str">"BRB"</span> } }</pre>
-        </div>
+                    <div class="ws-cmd">
+                        <div class="ws-cmd-header">switch_scene</div>
+                        <pre>{ <span class="c-key">"cmd"</span>: <span class="c-str">"switch_scene"</span>, <span class="c-key">"params"</span>: { <span class="c-key">"scene_name"</span>: <span class="c-str">"BRB"</span> } }</pre>
+                    </div>
 
-        <div class="ws-cmd">
-          <div class="ws-cmd-header">activate_preset</div>
-          <pre>{ <span class="c-key">"cmd"</span>: <span class="c-str">"activate_preset"</span>, <span class="c-key">"params"</span>: { <span class="c-key">"name"</span>: <span class="c-str">"brb"</span> } }</pre>
-        </div>
+                    <div class="ws-cmd">
+                        <div class="ws-cmd-header">activate_preset</div>
+                        <pre>{ <span class="c-key">"cmd"</span>: <span class="c-str">"activate_preset"</span>, <span class="c-key">"params"</span>: { <span class="c-key">"name"</span>: <span class="c-str">"brb"</span> } }</pre>
+                    </div>
 
-        <div class="ws-cmd">
-          <div class="ws-cmd-header">playlist_activate</div>
-          <pre>{ <span class="c-key">"cmd"</span>: <span class="c-str">"playlist_activate"</span>, <span class="c-key">"params"</span>: { <span class="c-key">"name"</span>: <span class="c-str">"intermission"</span> } }</pre>
-        </div>
+                    <div class="ws-cmd">
+                        <div class="ws-cmd-header">playlist_activate</div>
+                        <pre>{ <span class="c-key">"cmd"</span>: <span class="c-str">"playlist_activate"</span>, <span class="c-key">"params"</span>: { <span class="c-key">"name"</span>: <span class="c-str">"intermission"</span> } }</pre>
+                    </div>
 
-        <div class="ws-cmd">
-          <div class="ws-cmd-header">playlist_next</div>
-          <pre>{ <span class="c-key">"cmd"</span>: <span class="c-str">"playlist_next"</span> }</pre>
-        </div>
+                    <div class="ws-cmd">
+                        <div class="ws-cmd-header">playlist_next</div>
+                        <pre>{ <span class="c-key">"cmd"</span>: <span class="c-str">"playlist_next"</span> }</pre>
+                    </div>
 
-        <div class="ws-cmd">
-          <div class="ws-cmd-header">stream_start / stream_stop</div>
-          <pre>{ <span class="c-key">"cmd"</span>: <span class="c-str">"stream_start"</span> }
+                    <div class="ws-cmd">
+                        <div class="ws-cmd-header">stream_start / stream_stop</div>
+                        <pre>{ <span class="c-key">"cmd"</span>: <span class="c-str">"stream_start"</span> }
 { <span class="c-key">"cmd"</span>: <span class="c-str">"stream_stop"</span> }</pre>
-        </div>
+                    </div>
 
-        <div class="ws-cmd">
-          <div class="ws-cmd-header">get_status — poll current state</div>
-          <pre>{ <span class="c-key">"cmd"</span>: <span class="c-str">"get_status"</span> }
+                    <div class="ws-cmd">
+                        <div class="ws-cmd-header">get_status — poll current state</div>
+                        <pre>{ <span class="c-key">"cmd"</span>: <span class="c-str">"get_status"</span> }
 
 <span class="c-comment">// Response:</span>
 {
@@ -1517,161 +1662,289 @@ ws.onopen = () => {
     <span class="c-key">"current_item"</span>: { <span class="c-key">"title"</span>: <span class="c-str">"Content Block 1"</span>, ... }
   }
 }</pre>
-        </div>
-      </div>
-    </div>
+                    </div>
+                </div>
+            </div>
 
-    <!-- Events -->
-    <div class="endpoint" id="ws-events">
-      <div class="endpoint-header">
-        <span class="method-badge badge-ws">WS</span>
-        <div>
-          <div class="endpoint-path">Events — pushed to all connected clients</div>
-          <div class="endpoint-desc">Fired automatically whenever state changes from any source (REST, OSC, or another WS client)</div>
-        </div>
-      </div>
-      <div class="endpoint-body">
-        <div class="ws-cmd">
-          <div class="ws-cmd-header">scene_switched</div>
-          <pre>{ <span class="c-key">"event"</span>: <span class="c-str">"scene_switched"</span>, <span class="c-key">"data"</span>: { <span class="c-key">"scene"</span>: <span class="c-str">"BRB"</span>, <span class="c-key">"status"</span>: <span class="c-str">"ok"</span> } }</pre>
-        </div>
-        <div class="ws-cmd">
-          <div class="ws-cmd-header">preset_activated</div>
-          <pre>{ <span class="c-key">"event"</span>: <span class="c-str">"preset_activated"</span>, <span class="c-key">"data"</span>: { <span class="c-key">"preset"</span>: <span class="c-str">"brb"</span>, <span class="c-key">"actions"</span>: [...] } }</pre>
-        </div>
-        <div class="ws-cmd">
-          <div class="ws-cmd-header">playlist_activated</div>
-          <pre>{ <span class="c-key">"event"</span>: <span class="c-str">"playlist_activated"</span>, <span class="c-key">"data"</span>: { <span class="c-key">"playlist"</span>: <span class="c-str">"main"</span>, <span class="c-key">"track"</span>: <span class="c-str">"Intro Bumper"</span> } }</pre>
-        </div>
-        <div class="ws-cmd">
-          <div class="ws-cmd-header">track_changed</div>
-          <pre>{ <span class="c-key">"event"</span>: <span class="c-str">"track_changed"</span>, <span class="c-key">"data"</span>: { <span class="c-key">"track"</span>: <span class="c-str">"Content Block 2"</span>, <span class="c-key">"status"</span>: <span class="c-str">"advanced"</span> } }</pre>
-        </div>
-        <div class="ws-cmd">
-          <div class="ws-cmd-header">stream_started / stream_stopped</div>
-          <pre>{ <span class="c-key">"event"</span>: <span class="c-str">"stream_started"</span>, <span class="c-key">"data"</span>: { <span class="c-key">"status"</span>: <span class="c-str">"streaming_started"</span> } }
+            <!-- Events -->
+            <div class="endpoint" id="ws-events">
+                <div class="endpoint-header">
+                    <span class="method-badge badge-ws">WS</span>
+                    <div>
+                        <div class="endpoint-path">Events — pushed to all connected clients</div>
+                        <div class="endpoint-desc">Fired automatically whenever state changes from any source (REST, OSC, or another WS client)</div>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+                    <div class="ws-cmd">
+                        <div class="ws-cmd-header">scene_switched</div>
+                        <pre>{ <span class="c-key">"event"</span>: <span class="c-str">"scene_switched"</span>, <span class="c-key">"data"</span>: { <span class="c-key">"scene"</span>: <span class="c-str">"BRB"</span>, <span class="c-key">"status"</span>: <span class="c-str">"ok"</span> } }</pre>
+                    </div>
+                    <div class="ws-cmd">
+                        <div class="ws-cmd-header">preset_activated</div>
+                        <pre>{ <span class="c-key">"event"</span>: <span class="c-str">"preset_activated"</span>, <span class="c-key">"data"</span>: { <span class="c-key">"preset"</span>: <span class="c-str">"brb"</span>, <span class="c-key">"actions"</span>: [...] } }</pre>
+                    </div>
+                    <div class="ws-cmd">
+                        <div class="ws-cmd-header">playlist_activated</div>
+                        <pre>{ <span class="c-key">"event"</span>: <span class="c-str">"playlist_activated"</span>, <span class="c-key">"data"</span>: { <span class="c-key">"playlist"</span>: <span class="c-str">"main"</span>, <span class="c-key">"track"</span>: <span class="c-str">"Intro Bumper"</span> } }</pre>
+                    </div>
+                    <div class="ws-cmd">
+                        <div class="ws-cmd-header">track_changed</div>
+                        <pre>{ <span class="c-key">"event"</span>: <span class="c-str">"track_changed"</span>, <span class="c-key">"data"</span>: { <span class="c-key">"track"</span>: <span class="c-str">"Content Block 2"</span>, <span class="c-key">"status"</span>: <span class="c-str">"advanced"</span> } }</pre>
+                    </div>
+                    <div class="ws-cmd">
+                        <div class="ws-cmd-header">stream_started / stream_stopped</div>
+                        <pre>{ <span class="c-key">"event"</span>: <span class="c-str">"stream_started"</span>, <span class="c-key">"data"</span>: { <span class="c-key">"status"</span>: <span class="c-str">"streaming_started"</span> } }
 { <span class="c-key">"event"</span>: <span class="c-str">"stream_stopped"</span>, <span class="c-key">"data"</span>: { <span class="c-key">"status"</span>: <span class="c-str">"streaming_stopped"</span> } }</pre>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  </div>
 
 
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- OSC                                                     -->
-  <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- OSC                                                     -->
+        <!-- ═══════════════════════════════════════════════════════ -->
 
-  <div class="api-section" id="osc-section">
-    <div class="section-header">
-      <div class="section-icon" style="background:rgba(250,204,21,0.1);">📱</div>
-      <div>
-        <h2>OSC / TouchOSC</h2>
-        <div class="section-desc">UDP OSC bridge — control obs-relay from TouchOSC, Lemur, or any OSC-capable device</div>
-      </div>
-    </div>
+        <div class="api-section" id="osc-section">
+            <div class="section-header">
+                <div class="section-icon" style="background:rgba(250,204,21,0.1);">📱</div>
+                <div>
+                    <h2>OSC / TouchOSC</h2>
+                    <div class="section-desc">UDP OSC bridge — control obs-relay from TouchOSC, Lemur, or any OSC-capable device</div>
+                </div>
+            </div>
 
-    <!-- OSC Status -->
-    <div class="endpoint" id="osc-status">
-      <div class="endpoint-header">
-        <span class="method-badge badge-get">GET</span>
-        <div>
-          <div class="endpoint-path">/osc/status</div>
-          <div class="endpoint-desc">OSC bridge connection state and port info</div>
-        </div>
-      </div>
-      <div class="endpoint-body">
-        <div class="code-group">
-          <pre><span class="c-method">curl</span> <span class="c-url">http://localhost:8080/osc/status</span></pre>
-        </div>
-        <div class="response-label">Response</div>
-        <pre class="response">{
+            <!-- OSC Status -->
+            <div class="endpoint" id="osc-status">
+                <div class="endpoint-header">
+                    <span class="method-badge badge-get">GET</span>
+                    <div>
+                        <div class="endpoint-path">/osc/status</div>
+                        <div class="endpoint-desc">OSC bridge connection state and port info</div>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+                    <div class="code-group">
+                        <pre><span class="c-method">curl</span> <span class="c-url">http://localhost:8080/osc/status</span></pre>
+                    </div>
+                    <div class="response-label">Response</div>
+                    <pre class="response">{
   <span class="c-key">"enabled"</span>:     <span class="c-kw">true</span>,
   <span class="c-key">"running"</span>:     <span class="c-kw">true</span>,
   <span class="c-key">"listen_port"</span>: <span class="c-num">9000</span>,
   <span class="c-key">"reply_port"</span>:  <span class="c-num">9001</span>
 }</pre>
-      </div>
-    </div>
+                </div>
+            </div>
 
-    <!-- OSC Address Map -->
-    <div class="endpoint" id="osc-map">
-      <div class="endpoint-header">
-        <span class="method-badge badge-ws">OSC</span>
-        <div>
-          <div class="endpoint-path">Complete OSC Address Map</div>
-          <div class="endpoint-desc">Send to port 9000 · Feedback received on port 9001</div>
+            <!-- OSC Address Map -->
+            <div class="endpoint" id="osc-map">
+                <div class="endpoint-header">
+                    <span class="method-badge badge-ws">OSC</span>
+                    <div>
+                        <div class="endpoint-path">Complete OSC Address Map</div>
+                        <div class="endpoint-desc">Send to port 9000 · Feedback received on port 9001</div>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+
+                    <div class="response-label">Scene Presets — send any value (e.g. 1.0)</div>
+                    <table class="osc-table">
+                        <tr>
+                            <th>Address</th>
+                            <th>Value</th>
+                            <th></th>
+                            <th>Action</th>
+                        </tr>
+                        <tr>
+                            <td class="osc-addr">/obs/scene/live</td>
+                            <td class="osc-val">1.0</td>
+                            <td><span class="tag tag-send">send</span></td>
+                            <td>Switch to Live preset</td>
+                        </tr>
+                        <tr>
+                            <td class="osc-addr">/obs/scene/brb</td>
+                            <td class="osc-val">1.0</td>
+                            <td><span class="tag tag-send">send</span></td>
+                            <td>Switch to BRB preset</td>
+                        </tr>
+                        <tr>
+                            <td class="osc-addr">/obs/scene/standby</td>
+                            <td class="osc-val">1.0</td>
+                            <td><span class="tag tag-send">send</span></td>
+                            <td>Switch to Standby</td>
+                        </tr>
+                        <tr>
+                            <td class="osc-addr">/obs/scene/intermission</td>
+                            <td class="osc-val">1.0</td>
+                            <td><span class="tag tag-send">send</span></td>
+                            <td>Switch to Intermission</td>
+                        </tr>
+                        <tr>
+                            <td class="osc-addr">/obs/scene/end_card</td>
+                            <td class="osc-val">1.0</td>
+                            <td><span class="tag tag-send">send</span></td>
+                            <td>Switch to End Card</td>
+                        </tr>
+                    </table>
+
+                    <div class="response-label">Playlist Control</div>
+                    <table class="osc-table">
+                        <tr>
+                            <th>Address</th>
+                            <th>Value</th>
+                            <th></th>
+                            <th>Action</th>
+                        </tr>
+                        <tr>
+                            <td class="osc-addr">/obs/playlist/next</td>
+                            <td class="osc-val">1.0</td>
+                            <td><span class="tag tag-send">send</span></td>
+                            <td>Next track</td>
+                        </tr>
+                        <tr>
+                            <td class="osc-addr">/obs/playlist/prev</td>
+                            <td class="osc-val">1.0</td>
+                            <td><span class="tag tag-send">send</span></td>
+                            <td>Previous track</td>
+                        </tr>
+                        <tr>
+                            <td class="osc-addr">/obs/playlist/activate/main</td>
+                            <td class="osc-val">1.0</td>
+                            <td><span class="tag tag-send">send</span></td>
+                            <td>Load "main" playlist</td>
+                        </tr>
+                        <tr>
+                            <td class="osc-addr">/obs/playlist/activate/intermission</td>
+                            <td class="osc-val">1.0</td>
+                            <td><span class="tag tag-send">send</span></td>
+                            <td>Load intermission playlist</td>
+                        </tr>
+                        <tr>
+                            <td class="osc-addr">/obs/playlist/seek</td>
+                            <td class="osc-val">int</td>
+                            <td><span class="tag tag-send">send</span></td>
+                            <td>Jump to track index</td>
+                        </tr>
+                    </table>
+
+                    <div class="response-label">Stream</div>
+                    <table class="osc-table">
+                        <tr>
+                            <th>Address</th>
+                            <th>Value</th>
+                            <th></th>
+                            <th>Action</th>
+                        </tr>
+                        <tr>
+                            <td class="osc-addr">/obs/stream/start</td>
+                            <td class="osc-val">1.0</td>
+                            <td><span class="tag tag-send">send</span></td>
+                            <td>Start streaming</td>
+                        </tr>
+                        <tr>
+                            <td class="osc-addr">/obs/stream/stop</td>
+                            <td class="osc-val">1.0</td>
+                            <td><span class="tag tag-send">send</span></td>
+                            <td>Stop streaming</td>
+                        </tr>
+                    </table>
+
+                    <div class="response-label">Audio</div>
+                    <table class="osc-table">
+                        <tr>
+                            <th>Address</th>
+                            <th>Value</th>
+                            <th></th>
+                            <th>Action</th>
+                        </tr>
+                        <tr>
+                            <td class="osc-addr">/obs/volume/Mic</td>
+                            <td class="osc-val">0.0–1.0</td>
+                            <td><span class="tag tag-send">send</span></td>
+                            <td>Mic volume (maps to -60–0dB)</td>
+                        </tr>
+                        <tr>
+                            <td class="osc-addr">/obs/volume/Desktop</td>
+                            <td class="osc-val">0.0–1.0</td>
+                            <td><span class="tag tag-send">send</span></td>
+                            <td>Desktop audio volume</td>
+                        </tr>
+                        <tr>
+                            <td class="osc-addr">/obs/mute/Mic</td>
+                            <td class="osc-val">0 or 1</td>
+                            <td><span class="tag tag-send">send</span></td>
+                            <td>Mute (1) / unmute (0) Mic</td>
+                        </tr>
+                    </table>
+
+                    <div class="response-label">State Feedback — received from obs-relay on port 9001</div>
+                    <table class="osc-table">
+                        <tr>
+                            <th>Address</th>
+                            <th>Type</th>
+                            <th></th>
+                            <th>Content</th>
+                        </tr>
+                        <tr>
+                            <td class="osc-addr">/obs/state/scene</td>
+                            <td class="osc-val">string</td>
+                            <td><span class="tag tag-recv">recv</span></td>
+                            <td>Current scene name</td>
+                        </tr>
+                        <tr>
+                            <td class="osc-addr">/obs/state/stream</td>
+                            <td class="osc-val">int</td>
+                            <td><span class="tag tag-recv">recv</span></td>
+                            <td>1 = streaming, 0 = not</td>
+                        </tr>
+                        <tr>
+                            <td class="osc-addr">/obs/state/playlist</td>
+                            <td class="osc-val">string</td>
+                            <td><span class="tag tag-recv">recv</span></td>
+                            <td>Active playlist name</td>
+                        </tr>
+                        <tr>
+                            <td class="osc-addr">/obs/state/track</td>
+                            <td class="osc-val">string</td>
+                            <td><span class="tag tag-recv">recv</span></td>
+                            <td>Current track title</td>
+                        </tr>
+                        <tr>
+                            <td class="osc-addr">/obs/state/query</td>
+                            <td class="osc-val">1.0</td>
+                            <td><span class="tag tag-send">send</span></td>
+                            <td>Request full state broadcast</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
         </div>
-      </div>
-      <div class="endpoint-body">
 
-        <div class="response-label">Scene Presets — send any value (e.g. 1.0)</div>
-        <table class="osc-table">
-          <tr><th>Address</th><th>Value</th><th></th><th>Action</th></tr>
-          <tr><td class="osc-addr">/obs/scene/live</td><td class="osc-val">1.0</td><td><span class="tag tag-send">send</span></td><td>Switch to Live preset</td></tr>
-          <tr><td class="osc-addr">/obs/scene/brb</td><td class="osc-val">1.0</td><td><span class="tag tag-send">send</span></td><td>Switch to BRB preset</td></tr>
-          <tr><td class="osc-addr">/obs/scene/standby</td><td class="osc-val">1.0</td><td><span class="tag tag-send">send</span></td><td>Switch to Standby</td></tr>
-          <tr><td class="osc-addr">/obs/scene/intermission</td><td class="osc-val">1.0</td><td><span class="tag tag-send">send</span></td><td>Switch to Intermission</td></tr>
-          <tr><td class="osc-addr">/obs/scene/end_card</td><td class="osc-val">1.0</td><td><span class="tag tag-send">send</span></td><td>Switch to End Card</td></tr>
-        </table>
+    </main>
 
-        <div class="response-label">Playlist Control</div>
-        <table class="osc-table">
-          <tr><th>Address</th><th>Value</th><th></th><th>Action</th></tr>
-          <tr><td class="osc-addr">/obs/playlist/next</td><td class="osc-val">1.0</td><td><span class="tag tag-send">send</span></td><td>Next track</td></tr>
-          <tr><td class="osc-addr">/obs/playlist/prev</td><td class="osc-val">1.0</td><td><span class="tag tag-send">send</span></td><td>Previous track</td></tr>
-          <tr><td class="osc-addr">/obs/playlist/activate/main</td><td class="osc-val">1.0</td><td><span class="tag tag-send">send</span></td><td>Load "main" playlist</td></tr>
-          <tr><td class="osc-addr">/obs/playlist/activate/intermission</td><td class="osc-val">1.0</td><td><span class="tag tag-send">send</span></td><td>Load intermission playlist</td></tr>
-          <tr><td class="osc-addr">/obs/playlist/seek</td><td class="osc-val">int</td><td><span class="tag tag-send">send</span></td><td>Jump to track index</td></tr>
-        </table>
+    <script>
+        // Highlight active nav item on scroll
+        const sections = document.querySelectorAll('[id]');
+        const navLinks = document.querySelectorAll('nav a');
 
-        <div class="response-label">Stream</div>
-        <table class="osc-table">
-          <tr><th>Address</th><th>Value</th><th></th><th>Action</th></tr>
-          <tr><td class="osc-addr">/obs/stream/start</td><td class="osc-val">1.0</td><td><span class="tag tag-send">send</span></td><td>Start streaming</td></tr>
-          <tr><td class="osc-addr">/obs/stream/stop</td><td class="osc-val">1.0</td><td><span class="tag tag-send">send</span></td><td>Stop streaming</td></tr>
-        </table>
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    const active = document.querySelector(`nav a[href="#${entry.target.id}"]`);
+                    if (active) active.classList.add('active');
+                }
+            });
+        }, {
+            rootMargin: '-20% 0px -75% 0px'
+        });
 
-        <div class="response-label">Audio</div>
-        <table class="osc-table">
-          <tr><th>Address</th><th>Value</th><th></th><th>Action</th></tr>
-          <tr><td class="osc-addr">/obs/volume/Mic</td><td class="osc-val">0.0–1.0</td><td><span class="tag tag-send">send</span></td><td>Mic volume (maps to -60–0dB)</td></tr>
-          <tr><td class="osc-addr">/obs/volume/Desktop</td><td class="osc-val">0.0–1.0</td><td><span class="tag tag-send">send</span></td><td>Desktop audio volume</td></tr>
-          <tr><td class="osc-addr">/obs/mute/Mic</td><td class="osc-val">0 or 1</td><td><span class="tag tag-send">send</span></td><td>Mute (1) / unmute (0) Mic</td></tr>
-        </table>
-
-        <div class="response-label">State Feedback — received from obs-relay on port 9001</div>
-        <table class="osc-table">
-          <tr><th>Address</th><th>Type</th><th></th><th>Content</th></tr>
-          <tr><td class="osc-addr">/obs/state/scene</td><td class="osc-val">string</td><td><span class="tag tag-recv">recv</span></td><td>Current scene name</td></tr>
-          <tr><td class="osc-addr">/obs/state/stream</td><td class="osc-val">int</td><td><span class="tag tag-recv">recv</span></td><td>1 = streaming, 0 = not</td></tr>
-          <tr><td class="osc-addr">/obs/state/playlist</td><td class="osc-val">string</td><td><span class="tag tag-recv">recv</span></td><td>Active playlist name</td></tr>
-          <tr><td class="osc-addr">/obs/state/track</td><td class="osc-val">string</td><td><span class="tag tag-recv">recv</span></td><td>Current track title</td></tr>
-          <tr><td class="osc-addr">/obs/state/query</td><td class="osc-val">1.0</td><td><span class="tag tag-send">send</span></td><td>Request full state broadcast</td></tr>
-        </table>
-      </div>
-    </div>
-
-  </div>
-
-</main>
-
-<script>
-  // Highlight active nav item on scroll
-  const sections = document.querySelectorAll('[id]');
-  const navLinks = document.querySelectorAll('nav a');
-
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        navLinks.forEach(l => l.classList.remove('active'));
-        const active = document.querySelector(`nav a[href="#${entry.target.id}"]`);
-        if (active) active.classList.add('active');
-      }
-    });
-  }, { rootMargin: '-20% 0px -75% 0px' });
-
-  sections.forEach(s => observer.observe(s));
-</script>
+        sections.forEach(s => observer.observe(s));
+    </script>
 
 </body>
+
 </html>
