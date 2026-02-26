@@ -1,6 +1,6 @@
 # obs-relay
 
-> Remote OBS Studio control for the **videco**  ecosystem.  
+> Remote OBS Studio control API  
 > REST API · WebSocket relay · TouchOSC bridge · M3U playlist scheduler
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://python.org)
