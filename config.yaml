@@ -1,0 +1,48 @@
+# obs-relay configuration
+# All values can be overridden by environment variables (see docs)
+# ENV prefix: OBS_ / API_ / OSC_ / PLAYLIST_
+
+obs:
+  host: localhost          # OBS WebSocket host
+  port: 4455              # OBS WebSocket port (default since OBS 28)
+  password: ""            # OBS WebSocket password (set in OBS Tools → WebSocket Settings)
+  reconnect_interval: 5.0 # seconds between reconnect attempts
+  max_reconnect_attempts: 0  # 0 = infinite
+
+api:
+  host: "0.0.0.0"
+  port: 8080
+  api_key: ""             # Leave blank to disable auth, or set a Bearer token
+  cors_origins:
+    - "*"
+  log_level: info
+
+osc:
+  enabled: true
+  listen_host: "0.0.0.0"
+  listen_port: 9000       # TouchOSC sends to this port
+  reply_port: 9001        # obs-relay sends feedback to this port
+  client_host: "255.255.255.255"  # broadcast; change to TouchOSC device IP for unicast
+
+playlist:
+  directory: playlists    # Folder containing .m3u files
+  default_playlist: ""    # Auto-load on startup (set to playlist name, e.g. "main")
+  loop: true
+  source_name: MediaSource  # Name of the OBS media source to control
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Custom scene presets (optional — built-in defaults always available)
+# Uncomment and customize as needed.
+# ─────────────────────────────────────────────────────────────────────────────
+# scenes:
+#   presets:
+#     - name: my_custom_scene
+#       scene_name: "My OBS Scene Name"
+#       description: "Custom scene"
+#       playlist: my_playlist  # optional: activate this playlist when preset fires
+#       hotkey: /obs/scene/my_custom_scene
+#       actions:
+#         - type: set_mute
+#           params:
+#             source_name: Mic
+#             muted: true

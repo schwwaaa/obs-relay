@@ -1,0 +1,37 @@
+#EXTM3U
+
+# obs-relay playlist — main show
+# #EXTOVERLAY: tags control the title card for each track.
+# The overlay source ("TitleOverlay") must exist in your OBS scene.
+
+# Standard track — overlay uses EXTINF title, global hold/delay from config
+#EXTINF:15,Pre-Show Countdown
+/media/pre-show-countdown.mp4
+
+# Custom overlay text override
+#EXTINF:3600,Episode 01 — The Beginning
+#EXTOVERLAY:text=Now Playing: Episode One
+#EXTOVERLAY:hold=10
+/media/episode-01.mp4
+
+# Shorter overlay hold for a bumper (don't want title lingering)
+#EXTINF:30,Station ID Bumper
+#EXTOVERLAY:hold=4
+/media/bumper.mp4
+
+# Skip overlay entirely for this track (ad, sponsor, internal clip)
+#EXTINF:60,Sponsor Break
+#EXTOVERLAY:skip=1
+/media/sponsor.mp4
+
+# Delayed overlay — appears 5s into the clip (after opening credits)
+#EXTINF:3600,Episode 02 — The Return
+#EXTOVERLAY:text=Now Playing: Episode Two
+#EXTOVERLAY:hold=12
+#EXTOVERLAY:delay=5
+/media/episode-02.mp4
+
+# "Up Next" style — configure overlay.mode=next_up in config to use the next_up_prefix
+#EXTINF:3600,Episode 03 — The Finale
+#EXTOVERLAY:hold=8
+/media/episode-03.mp4

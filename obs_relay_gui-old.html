@@ -1,0 +1,2876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>obs-relay — API Prototyper</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Bebas+Neue&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg:       #0d0d0d;
+  --panel:    #141414;
+  --surface:  #1a1a1a;
+  --border:   #2a2a2a;
+  --border2:  #383838;
+  --text:     #e8e8e0;
+  --muted:    #606060;
+  --dim:      #404040;
+  --accent:   #e8ff47;  /* electric yellow-green */
+  --accent2:  #ff6b35;  /* broadcast orange */
+  --blue:     #47b8ff;
+  --green:    #47ff8c;
+  --red:      #ff4757;
+  --purple:   #b847ff;
+  --ws-color: #47b8ff;
+  --get:      #47ff8c;
+  --post:     #e8ff47;
+  --delete:   #ff4757;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 13px;
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── SIDEBAR ────────────────────────────────────────────────── */
+.sidebar {
+  width: 220px;
+  min-width: 220px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.logo {
+  padding: 20px 18px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.logo-top {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.logo-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 26px;
+  letter-spacing: 0.05em;
+  color: var(--text);
+  line-height: 1;
+}
+.logo-name span { color: var(--accent); }
+.logo-tag {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.conn-bar {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.conn-bar input {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  width: 100%;
+  outline: none;
+}
+.conn-bar input:focus { border-color: var(--accent); }
+.conn-btn {
+  background: var(--accent);
+  color: #000;
+  border: none;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 7px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.conn-btn:hover { background: #fff; }
+.conn-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+}
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dim);
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+.status-dot.connected { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.status-dot.ws-live   { background: var(--blue);  box-shadow: 0 0 6px var(--blue); }
+.status-dot.error     { background: var(--red);   box-shadow: 0 0 6px var(--red); }
+
+.nav-section {
+  padding: 10px 18px 4px;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 18px;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 12px;
+  transition: all 0.12s;
+  border-left: 2px solid transparent;
+}
+.nav-item:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+.nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(232,255,71,0.04); }
+.nav-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dot-get    { background: var(--green); }
+.dot-post   { background: var(--post); }
+.dot-delete { background: var(--red); }
+.dot-ws     { background: var(--blue); }
+.dot-demo   { background: var(--purple); }
+
+.sidebar-scroll { overflow-y: auto; flex: 1; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+
+/* ── MAIN ───────────────────────────────────────────────────── */
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+  gap: 16px;
+}
+.page-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  letter-spacing: 0.06em;
+  color: var(--text);
+}
+.page-subtitle {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+.tab-bar {
+  display: flex;
+  gap: 4px;
+}
+.tab {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 3px;
+  cursor: pointer;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid transparent;
+  transition: all 0.12s;
+}
+.tab:hover { color: var(--text); border-color: var(--border2); }
+.tab.active { color: #000; background: var(--accent); border-color: var(--accent); }
+
+/* ── CONTENT AREA ───────────────────────────────────────────── */
+.content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.api-panel {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+/* ── RIGHT PANEL (curl + log) ───────────────────────────────── */
+.right-panel {
+  width: 360px;
+  min-width: 360px;
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.right-panel-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+}
+.rptab {
+  flex: 1;
+  padding: 9px;
+  text-align: center;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.12s;
+}
+.rptab:hover { color: var(--text); }
+.rptab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.rp-content {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+/* ── CURL DISPLAY ─────────────────────────────────────────────*/
+.curl-box {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.curl-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.copy-btn {
+  background: none;
+  border: 1px solid var(--border2);
+  color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+.copy-btn.copied { color: var(--green); border-color: var(--green); }
+
+pre.curl-code {
+  background: #0a0a0a;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 12px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  line-height: 1.65;
+  color: #c8c8c0;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+/* ── EVENT LOG ───────────────────────────────────────────────── */
+.event-log {
+  padding: 0;
+}
+.log-entry {
+  padding: 9px 16px;
+  border-bottom: 1px solid var(--border);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  line-height: 1.55;
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn { from { opacity: 0; background: rgba(232,255,71,0.05); } to { opacity: 1; } }
+.log-time {
+  color: var(--muted);
+  margin-right: 8px;
+}
+.log-event { color: var(--accent); }
+.log-data { color: #9090a0; margin-top: 3px; }
+.log-req { color: var(--blue); }
+.log-resp-ok { color: var(--green); }
+.log-resp-err { color: var(--red); }
+.log-ws { color: var(--ws-color); }
+
+/* ── API SECTION STYLES ────────────────────────────────────────*/
+.section { margin-bottom: 36px; }
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.section-icon {
+  font-size: 18px;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border-radius: 6px;
+}
+.section-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  letter-spacing: 0.05em;
+}
+.section-desc {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+/* ── ENDPOINT CARD ────────────────────────────────────────────*/
+.endpoint-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+.endpoint-card:hover { border-color: var(--border2); }
+
+.endpoint-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+}
+.method {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  letter-spacing: 0.06em;
+}
+.m-get    { background: rgba(71,255,140,0.12); color: var(--green); }
+.m-post   { background: rgba(232,255,71,0.12); color: var(--post); }
+.m-delete { background: rgba(255,71,87,0.12);  color: var(--red); }
+.m-ws     { background: rgba(71,184,255,0.12); color: var(--blue); }
+
+.endpoint-path {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  flex: 1;
+}
+.ep-param { color: var(--accent2); }
+.endpoint-desc { font-size: 11px; color: var(--muted); }
+
+.endpoint-body {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+/* ── FORM CONTROLS ────────────────────────────────────────────*/
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 120px;
+}
+.field label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.field input,
+.field select,
+.field textarea {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  padding: 7px 10px;
+  border-radius: 4px;
+  outline: none;
+  transition: border-color 0.12s;
+}
+.field input:focus,
+.field select:focus,
+.field textarea:focus { border-color: var(--accent); }
+.field textarea { resize: vertical; min-height: 60px; }
+.field select option { background: var(--surface); }
+.field-wide { flex: 1; min-width: 200px; }
+
+.fire-btn {
+  background: var(--accent);
+  color: #000;
+  border: none;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.12s;
+  align-self: flex-end;
+  white-space: nowrap;
+}
+.fire-btn:hover { background: #fff; transform: translateY(-1px); }
+.fire-btn:active { transform: translateY(0); }
+.fire-btn.danger { background: var(--red); color: #fff; }
+.fire-btn.danger:hover { background: #ff8090; }
+.fire-btn.ws-btn { background: var(--blue); color: #000; }
+.fire-btn.ws-btn:hover { background: #90d8ff; }
+
+/* ── RESPONSE DISPLAY ─────────────────────────────────────────*/
+.response-area {
+  width: 100%;
+  margin-top: 8px;
+  background: #080808;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px 12px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  line-height: 1.6;
+  min-height: 36px;
+  color: #a0a0a0;
+  display: none;
+}
+.response-area.ok  { border-left: 2px solid var(--green); display: block; }
+.response-area.err { border-left: 2px solid var(--red);   display: block; }
+.response-area.info { border-left: 2px solid var(--blue);  display: block; }
+
+/* ── DEMOS ────────────────────────────────────────────────────*/
+.demo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+.demo-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.demo-card:hover { border-color: var(--purple); transform: translateY(-2px); }
+.demo-header {
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.demo-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 17px;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+.demo-badge {
+  display: inline-block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  padding: 2px 7px;
+  border-radius: 2px;
+  background: rgba(184,71,255,0.15);
+  color: var(--purple);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.demo-body { padding: 14px 18px; }
+.demo-desc {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 14px;
+}
+.demo-steps {
+  list-style: none;
+  margin-bottom: 14px;
+}
+.demo-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: #888;
+  padding: 4px 0;
+  line-height: 1.5;
+}
+.step-num {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  flex-shrink: 0;
+  color: var(--accent);
+  margin-top: 1px;
+}
+.run-demo-btn {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.run-demo-btn:hover { background: var(--purple); border-color: var(--purple); color: #fff; }
+
+/* ── WS PANEL ────────────────────────────────────────────────*/
+.ws-section {
+  padding: 0;
+}
+.ws-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+}
+.ws-stream {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+  max-height: 300px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.ws-msg {
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  line-height: 1.5;
+  animation: fadeIn 0.15s ease;
+}
+.ws-msg .evt { color: var(--blue); }
+.ws-msg .ts  { color: var(--muted); margin-right: 6px; }
+.ws-msg .dat { color: #888; margin-top: 2px; }
+.ws-cmd-area {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ws-cmd-area textarea {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  padding: 8px 10px;
+  border-radius: 4px;
+  resize: vertical;
+  min-height: 60px;
+  outline: none;
+}
+.ws-cmd-area textarea:focus { border-color: var(--blue); }
+.ws-quick-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.ws-quick {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  padding: 4px 8px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  color: var(--muted);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.ws-quick:hover { color: var(--blue); border-color: var(--blue); }
+
+/* ── STATUS STRIP ────────────────────────────────────────────*/
+.status-strip {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 7px 24px;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+}
+.ss-item { display: flex; align-items: center; gap: 6px; }
+.ss-val { color: var(--text); }
+.ss-live { color: var(--red); animation: blink 1.5s infinite; }
+@keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+
+/* ── SCROLLBARS ──────────────────────────────────────────────*/
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* ── SECTION PAGES ───────────────────────────────────────────*/
+.page { display: none; }
+.page.active { display: block; }
+
+/* Tag for new endpoints */
+.new-tag {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px;
+  background: rgba(232,255,71,0.2);
+  color: var(--accent);
+  padding: 1px 5px;
+  border-radius: 2px;
+  margin-left: 6px;
+  vertical-align: middle;
+  letter-spacing: 0.05em;
+}
+
+.inline-code {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 1px 5px;
+  border-radius: 2px;
+  color: var(--blue);
+}
+
+/* ── LIVE RECORDING BAR ──────────────────────────────────────*/
+.live-bar {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 16px;
+  background: rgba(255,71,87,0.1);
+  border: 1px solid rgba(255,71,87,0.3);
+  border-radius: 4px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  margin-bottom: 10px;
+}
+.live-bar.visible { display: flex; }
+.live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); animation: blink 1s infinite; }
+</style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ─────────────────────────────────────────────── -->
+<nav class="sidebar">
+  <div class="logo">
+    <div class="logo-top">drop-zone-ops</div>
+    <div class="logo-name">obs<span>-relay</span></div>
+    <div class="logo-tag">API Prototyper v1.1.0</div>
+  </div>
+
+  <div class="conn-bar">
+    <input id="serverHost" value="http://localhost:8080" placeholder="http://localhost:8080">
+    <input id="apiKey" placeholder="API key (optional)" type="password">
+    <button class="conn-btn" onclick="testConnection()">Connect</button>
+    <div class="conn-status">
+      <div class="status-dot" id="httpDot"></div>
+      <span id="httpStatus" style="color:var(--muted)">not connected</span>
+    </div>
+    <div class="conn-status">
+      <div class="status-dot" id="wsDot"></div>
+      <span id="wsStatus" style="color:var(--muted)">ws disconnected</span>
+    </div>
+  </div>
+
+  <div class="sidebar-scroll">
+    <div class="nav-section">System</div>
+    <div class="nav-item active" onclick="showPage('system')">
+      <span class="nav-dot dot-get"></span>Health &amp; Version
+    </div>
+
+    <div class="nav-section">Scenes</div>
+    <div class="nav-item" onclick="showPage('scenes')">
+      <span class="nav-dot dot-get"></span>Scenes &amp; Transitions
+    </div>
+    <div class="nav-item" onclick="showPage('presets')">
+      <span class="nav-dot dot-post"></span>Scene Presets
+    </div>
+    <div class="nav-item" onclick="showPage('studio')">
+      <span class="nav-dot dot-post"></span>Studio Mode
+    </div>
+
+    <div class="nav-section">Playlists</div>
+    <div class="nav-item" onclick="showPage('playlists')">
+      <span class="nav-dot dot-get"></span>Browse &amp; Status
+    </div>
+    <div class="nav-item" onclick="showPage('playlist-control')">
+      <span class="nav-dot dot-post"></span>Playback Control
+    </div>
+    <div class="nav-item" onclick="showPage('playlist-manage')">
+      <span class="nav-dot dot-post"></span>Create &amp; Manage
+    </div>
+
+    <div class="nav-section">Audio</div>
+    <div class="nav-item" onclick="showPage('audio')">
+      <span class="nav-dot dot-post"></span>Volume &amp; Mute
+    </div>
+
+    <div class="nav-section">Output</div>
+    <div class="nav-item" onclick="showPage('streaming')">
+      <span class="nav-dot dot-post"></span>Streaming
+    </div>
+    <div class="nav-item" onclick="showPage('recording')">
+      <span class="nav-dot dot-post"></span>Recording
+    </div>
+
+    <div class="nav-section">Realtime</div>
+    <div class="nav-item" onclick="showPage('websocket')">
+      <span class="nav-dot dot-ws"></span>WebSocket Relay
+    </div>
+    <div class="nav-item" onclick="showPage('osc')">
+      <span class="nav-dot dot-get"></span>OSC Status
+    </div>
+
+    <div class="nav-section">Text Overlays</div>
+    <div class="nav-item" onclick="showPage('overlay')">
+      <span class="nav-dot dot-post"></span>Overlay Control
+    </div>
+    <div class="nav-item" onclick="showPage('overlay-setup')">
+      <span class="nav-dot dot-get"></span>OBS Setup Guide
+    </div>
+
+    <div class="nav-section">Use Cases</div>
+    <div class="nav-item" onclick="showPage('demos')">
+      <span class="nav-dot dot-demo"></span>Demo Workflows
+    </div>
+  </div>
+</nav>
+
+<!-- ── MAIN ───────────────────────────────────────────────── -->
+<main>
+  <div class="top-bar">
+    <div>
+      <div class="page-title" id="pageTitle">System Health</div>
+      <div class="page-subtitle" id="pageSubtitle">Connection status and OBS version info</div>
+    </div>
+    <div class="tab-bar">
+      <div class="tab active" onclick="setTab('ui')" id="tabUi">UI</div>
+      <div class="tab" onclick="setTab('raw')" id="tabRaw">Raw JSON</div>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- ── API PANEL ── -->
+    <div class="api-panel" id="apiPanel">
+
+      <!-- ── SYSTEM ── -->
+      <div class="page active" id="page-system">
+        <div class="section">
+          <div class="section-header">
+            <div class="section-icon">🟢</div>
+            <div>
+              <div class="section-title">Health &amp; Version</div>
+              <div class="section-desc">Verify obs-relay is running and connected to OBS</div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-get">GET</span>
+              <span class="endpoint-path">/health</span>
+              <span class="endpoint-desc">Connection status, WS clients, OSC state</span>
+            </div>
+            <div class="endpoint-body">
+              <button class="fire-btn" onclick="fire('GET','/health','health-resp')">Send</button>
+              <div class="response-area" id="health-resp"></div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-get">GET</span>
+              <span class="endpoint-path">/healthz</span>
+              <span class="endpoint-desc">Machine-readable — returns 503 when OBS disconnected</span>
+            </div>
+            <div class="endpoint-body">
+              <button class="fire-btn" onclick="fire('GET','/healthz','healthz-resp')">Send</button>
+              <div class="response-area" id="healthz-resp"></div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-get">GET</span>
+              <span class="endpoint-path">/obs/version</span>
+              <span class="endpoint-desc">OBS Studio + WebSocket protocol version</span>
+            </div>
+            <div class="endpoint-body">
+              <button class="fire-btn" onclick="fire('GET','/obs/version','version-resp')">Send</button>
+              <div class="response-area" id="version-resp"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SCENES ── -->
+      <div class="page" id="page-scenes">
+        <div class="section">
+          <div class="section-header">
+            <div class="section-icon">🎬</div>
+            <div>
+              <div class="section-title">Scenes &amp; Transitions</div>
+              <div class="section-desc">Switch scenes and control transition type/duration</div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-get">GET</span>
+              <span class="endpoint-path">/obs/scenes</span>
+              <span class="endpoint-desc">List all OBS scenes</span>
+            </div>
+            <div class="endpoint-body">
+              <button class="fire-btn" onclick="fire('GET','/obs/scenes','scenes-list-resp')">Send</button>
+              <div class="response-area" id="scenes-list-resp"></div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-get">GET</span>
+              <span class="endpoint-path">/obs/scene/current</span>
+              <span class="endpoint-desc">Currently active program scene</span>
+            </div>
+            <div class="endpoint-body">
+              <button class="fire-btn" onclick="fire('GET','/obs/scene/current','scene-current-resp')">Send</button>
+              <div class="response-area" id="scene-current-resp"></div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-post">POST</span>
+              <span class="endpoint-path">/obs/scene/<span class="ep-param">{scene_name}</span></span>
+              <span class="endpoint-desc">Switch to scene immediately</span>
+            </div>
+            <div class="endpoint-body">
+              <div class="field">
+                <label>Scene Name</label>
+                <input id="switchSceneName" placeholder="Live" value="Live">
+              </div>
+              <button class="fire-btn" onclick="fireScene()">Switch</button>
+              <div class="response-area" id="scene-switch-resp"></div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-get">GET</span>
+              <span class="endpoint-path">/obs/transition</span>
+              <span class="endpoint-desc">Current transition name and duration</span>
+            </div>
+            <div class="endpoint-body">
+              <button class="fire-btn" onclick="fire('GET','/obs/transition','trans-get-resp')">Send</button>
+              <div class="response-area" id="trans-get-resp"></div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-post">POST</span>
+              <span class="endpoint-path">/obs/transition</span>
+              <span class="endpoint-desc">Set transition type and/or duration<span class="new-tag">v1.1</span></span>
+            </div>
+            <div class="endpoint-body">
+              <div class="field">
+                <label>Transition Name</label>
+                <select id="transName">
+                  <option value="">— keep current —</option>
+                  <option value="Fade">Fade</option>
+                  <option value="Cut">Cut</option>
+                  <option value="Stinger">Stinger</option>
+                  <option value="Swipe">Swipe</option>
+                  <option value="Slide">Slide</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Duration (ms)</label>
+                <input id="transDuration" type="number" placeholder="500" value="500" style="width:90px">
+              </div>
+              <button class="fire-btn" onclick="fireTransition()">Set</button>
+              <div class="response-area" id="trans-set-resp"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PRESETS ── -->
+      <div class="page" id="page-presets">
+        <div class="section">
+          <div class="section-header">
+            <div class="section-icon">⚡</div>
+            <div>
+              <div class="section-title">Scene Presets</div>
+              <div class="section-desc">Named broadcast states with side effects (mute, playlist activation)</div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-get">GET</span>
+              <span class="endpoint-path">/presets</span>
+              <span class="endpoint-desc">All registered presets and their OBS scene mappings</span>
+            </div>
+            <div class="endpoint-body">
+              <button class="fire-btn" onclick="fire('GET','/presets','presets-list-resp')">Send</button>
+              <div class="response-area" id="presets-list-resp"></div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-post">POST</span>
+              <span class="endpoint-path">/presets/<span class="ep-param">{preset_name}</span>/activate</span>
+              <span class="endpoint-desc">Activate preset — switches scene and runs all side effects</span>
+            </div>
+            <div class="endpoint-body">
+              <div class="field">
+                <label>Preset</label>
+                <select id="presetName">
+                  <option value="live">live</option>
+                  <option value="brb">brb</option>
+                  <option value="standby">standby</option>
+                  <option value="intermission">intermission</option>
+                  <option value="end_card">end_card</option>
+                </select>
+              </div>
+              <button class="fire-btn" onclick="firePreset()">Activate</button>
+              <div class="response-area" id="preset-resp"></div>
+            </div>
+          </div>
+
+          <!-- Quick Preset Panel -->
+          <div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:16px;margin-top:8px;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Quick Fire</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="fire-btn" onclick="quickPreset('live')" style="background:var(--green);color:#000;">🔴 LIVE</button>
+              <button class="fire-btn" onclick="quickPreset('brb')" style="background:var(--accent2);color:#fff;">BRB</button>
+              <button class="fire-btn" onclick="quickPreset('standby')" style="background:var(--surface);border:1px solid var(--border2);color:var(--text);">STANDBY</button>
+              <button class="fire-btn" onclick="quickPreset('intermission')" style="background:var(--purple);color:#fff;">INTERMISSION</button>
+              <button class="fire-btn" onclick="quickPreset('end_card')" style="background:var(--dim);color:var(--text);">END CARD</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── STUDIO ── -->
+      <div class="page" id="page-studio">
+        <div class="section">
+          <div class="section-header">
+            <div class="section-icon">🖥</div>
+            <div>
+              <div class="section-title">Studio Mode</div>
+              <div class="section-desc">Preview → Program workflow for prepared transitions</div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-post">POST</span>
+              <span class="endpoint-path">/obs/studio/enable</span>
+              <span class="endpoint-desc">Enable or disable Studio Mode</span>
+            </div>
+            <div class="endpoint-body">
+              <div class="field">
+                <label>Enabled</label>
+                <select id="studioEnabled">
+                  <option value="true">true</option>
+                  <option value="false">false</option>
+                </select>
+              </div>
+              <button class="fire-btn" onclick="fireStudio()">Set</button>
+              <div class="response-area" id="studio-resp"></div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-post">POST</span>
+              <span class="endpoint-path">/obs/studio/transition</span>
+              <span class="endpoint-desc">Cut preview to program (requires Studio Mode enabled)</span>
+            </div>
+            <div class="endpoint-body">
+              <button class="fire-btn" onclick="fire('POST','/obs/studio/transition','studio-trans-resp')">Cut to Program</button>
+              <div class="response-area" id="studio-trans-resp"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PLAYLISTS ── -->
+      <div class="page" id="page-playlists">
+        <div class="section">
+          <div class="section-header">
+            <div class="section-icon">📼</div>
+            <div>
+              <div class="section-title">Playlist Browser</div>
+              <div class="section-desc">View loaded playlists, validate files, check playback status</div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-get">GET</span>
+              <span class="endpoint-path">/playlists</span>
+              <span class="endpoint-desc">All loaded playlists with track lists</span>
+            </div>
+            <div class="endpoint-body">
+              <button class="fire-btn" onclick="fire('GET','/playlists','pl-list-resp')">Send</button>
+              <div class="response-area" id="pl-list-resp"></div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-get">GET</span>
+              <span class="endpoint-path">/playlists/status</span>
+              <span class="endpoint-desc">Active playlist, current track, position, auto-advance state</span>
+            </div>
+            <div class="endpoint-body">
+              <button class="fire-btn" onclick="fire('GET','/playlists/status','pl-status-resp')">Send</button>
+              <div class="response-area" id="pl-status-resp"></div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-get">GET</span>
+              <span class="endpoint-path">/playlists/validate</span>
+              <span class="endpoint-desc">Preflight check — verify all files exist on disk<span class="new-tag">v1.1</span></span>
+            </div>
+            <div class="endpoint-body">
+              <button class="fire-btn" onclick="fire('GET','/playlists/validate','pl-validate-resp')">Run Preflight</button>
+              <div class="response-area" id="pl-validate-resp"></div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-get">GET</span>
+              <span class="endpoint-path">/playlists/<span class="ep-param">{name}</span>/validate</span>
+              <span class="endpoint-desc">Validate a single playlist</span>
+            </div>
+            <div class="endpoint-body">
+              <div class="field">
+                <label>Playlist Name</label>
+                <input id="validatePlName" placeholder="main" value="main">
+              </div>
+              <button class="fire-btn" onclick="fireValidatePl()">Validate</button>
+              <div class="response-area" id="pl-single-validate-resp"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PLAYLIST CONTROL ── -->
+      <div class="page" id="page-playlist-control">
+        <div class="section">
+          <div class="section-header">
+            <div class="section-icon">▶️</div>
+            <div>
+              <div class="section-title">Playback Control</div>
+              <div class="section-desc">Activate, navigate, and seek playlists in real-time</div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-post">POST</span>
+              <span class="endpoint-path">/playlists/<span class="ep-param">{name}</span>/activate</span>
+              <span class="endpoint-desc">Load and start a playlist (hot-swap channels)</span>
+            </div>
+            <div class="endpoint-body">
+              <div class="field">
+                <label>Playlist Name</label>
+                <input id="activatePlName" placeholder="main" value="main">
+              </div>
+              <div class="field">
+                <label>Start Position</label>
+                <input id="activatePlPos" type="number" placeholder="0" value="0" style="width:80px">
+              </div>
+              <button class="fire-btn" onclick="fireActivatePl()">Activate</button>
+              <div class="response-area" id="pl-activate-resp"></div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-post">POST</span>
+              <span class="endpoint-path">/playlists/next</span>
+              <span class="endpoint-desc">Advance to next track manually</span>
+            </div>
+            <div class="endpoint-body">
+              <button class="fire-btn" onclick="fire('POST','/playlists/next','pl-next-resp')">Next Track</button>
+              <div class="response-area" id="pl-next-resp"></div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-post">POST</span>
+              <span class="endpoint-path">/playlists/prev</span>
+              <span class="endpoint-desc">Go back to previous track</span>
+            </div>
+            <div class="endpoint-body">
+              <button class="fire-btn" onclick="fire('POST','/playlists/prev','pl-prev-resp')">Prev Track</button>
+              <div class="response-area" id="pl-prev-resp"></div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-post">POST</span>
+              <span class="endpoint-path">/playlists/seek/<span class="ep-param">{position}</span></span>
+              <span class="endpoint-desc">Jump directly to a track index</span>
+            </div>
+            <div class="endpoint-body">
+              <div class="field">
+                <label>Position (0-indexed)</label>
+                <input id="seekPos" type="number" placeholder="0" value="0" style="width:90px">
+              </div>
+              <button class="fire-btn" onclick="fireSeek()">Seek</button>
+              <div class="response-area" id="pl-seek-resp"></div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-post">POST</span>
+              <span class="endpoint-path">/playlists/auto-advance</span>
+              <span class="endpoint-desc">Toggle automatic track advancement when video ends<span class="new-tag">v1.1</span></span>
+            </div>
+            <div class="endpoint-body">
+              <div class="field">
+                <label>Enabled</label>
+                <select id="autoAdvance">
+                  <option value="true">true</option>
+                  <option value="false">false</option>
+                </select>
+              </div>
+              <button class="fire-btn" onclick="fireAutoAdvance()">Set</button>
+              <div class="response-area" id="auto-adv-resp"></div>
+            </div>
+          </div>
+
+          <!-- Transport strip -->
+          <div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:16px;margin-top:8px;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Transport Strip</div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <button class="fire-btn" onclick="fire('POST','/playlists/prev','transport-resp')" style="background:var(--surface);border:1px solid var(--border2);color:var(--text);padding:10px 18px;font-size:14px;">⏮</button>
+              <button class="fire-btn" onclick="fire('POST','/playlists/next','transport-resp')" style="background:var(--surface);border:1px solid var(--border2);color:var(--text);padding:10px 18px;font-size:14px;">⏭</button>
+              <div class="response-area info" id="transport-resp" style="display:block;flex:1;min-height:36px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PLAYLIST MANAGE ── -->
+      <div class="page" id="page-playlist-manage">
+        <div class="section">
+          <div class="section-header">
+            <div class="section-icon">📁</div>
+            <div>
+              <div class="section-title">Create &amp; Manage</div>
+              <div class="section-desc">Build playlists from file paths, upload .m3u files, delete</div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-post">POST</span>
+              <span class="endpoint-path">/playlists/create</span>
+              <span class="endpoint-desc">Create playlist from a list of file paths or URLs</span>
+            </div>
+            <div class="endpoint-body">
+              <div class="field">
+                <label>Name</label>
+                <input id="createPlName" placeholder="my-show" value="my-show">
+              </div>
+              <div class="field field-wide">
+                <label>Items (one path per line)</label>
+                <textarea id="createPlItems" rows="3" placeholder="/media/intro.mp4&#10;/media/episode-01.mp4&#10;/media/outro.mp4"></textarea>
+              </div>
+              <div class="field">
+                <label>Loop</label>
+                <select id="createPlLoop">
+                  <option value="true">true</option>
+                  <option value="false">false</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Save to disk</label>
+                <select id="createPlSave">
+                  <option value="false">false</option>
+                  <option value="true">true</option>
+                </select>
+              </div>
+              <button class="fire-btn" onclick="fireCreatePlaylist()">Create</button>
+              <div class="response-area" id="pl-create-resp"></div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-post">POST</span>
+              <span class="endpoint-path">/playlists/upload</span>
+              <span class="endpoint-desc">Upload an existing .m3u file</span>
+            </div>
+            <div class="endpoint-body">
+              <div class="field">
+                <label>M3U File</label>
+                <input type="file" id="uploadM3u" accept=".m3u,.m3u8" style="font-size:11px;color:var(--muted);">
+              </div>
+              <button class="fire-btn" onclick="fireUploadM3u()">Upload</button>
+              <div class="response-area" id="pl-upload-resp"></div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-delete">DELETE</span>
+              <span class="endpoint-path">/playlists/<span class="ep-param">{name}</span></span>
+              <span class="endpoint-desc">Remove playlist from memory and disk</span>
+            </div>
+            <div class="endpoint-body">
+              <div class="field">
+                <label>Playlist Name</label>
+                <input id="deletePlName" placeholder="old-show">
+              </div>
+              <button class="fire-btn danger" onclick="fireDeletePlaylist()">Delete</button>
+              <div class="response-area" id="pl-delete-resp"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── AUDIO ── -->
+      <div class="page" id="page-audio">
+        <div class="section">
+          <div class="section-header">
+            <div class="section-icon">🔊</div>
+            <div>
+              <div class="section-title">Audio</div>
+              <div class="section-desc">Volume (dB) and mute control per OBS source</div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-get">GET</span>
+              <span class="endpoint-path">/obs/source/<span class="ep-param">{name}</span>/media</span>
+              <span class="endpoint-desc">Media source playback state, cursor, duration<span class="new-tag">v1.1</span></span>
+            </div>
+            <div class="endpoint-body">
+              <div class="field">
+                <label>Source Name</label>
+                <input id="mediaStatusSrc" placeholder="MediaSource" value="MediaSource">
+              </div>
+              <button class="fire-btn" onclick="fireMediaStatus()">Get</button>
+              <div class="response-area" id="media-status-resp"></div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-post">POST</span>
+              <span class="endpoint-path">/obs/source/<span class="ep-param">{name}</span>/volume</span>
+              <span class="endpoint-desc">Set volume in dB (-100 to 26). 0 = unity.</span>
+            </div>
+            <div class="endpoint-body">
+              <div class="field">
+                <label>Source Name</label>
+                <input id="volSrcName" placeholder="Mic" value="Mic">
+              </div>
+              <div class="field">
+                <label>Volume (dB)</label>
+                <input id="volDb" type="number" placeholder="0" value="0" min="-100" max="26" style="width:90px">
+              </div>
+              <button class="fire-btn" onclick="fireVolume()">Set</button>
+              <div class="response-area" id="vol-resp"></div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-post">POST</span>
+              <span class="endpoint-path">/obs/source/<span class="ep-param">{name}</span>/mute</span>
+              <span class="endpoint-desc">Mute or unmute an audio source</span>
+            </div>
+            <div class="endpoint-body">
+              <div class="field">
+                <label>Source Name</label>
+                <input id="muteSrcName" placeholder="Mic" value="Mic">
+              </div>
+              <div class="field">
+                <label>Muted</label>
+                <select id="muteVal">
+                  <option value="true">true</option>
+                  <option value="false">false</option>
+                </select>
+              </div>
+              <button class="fire-btn" onclick="fireMute()">Set</button>
+              <div class="response-area" id="mute-resp"></div>
+            </div>
+          </div>
+
+          <!-- dB reference card -->
+          <div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:16px;margin-top:8px;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">dB Reference</div>
+            <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 16px;font-family:'IBM Plex Mono',monospace;font-size:11px;">
+              <span style="color:var(--accent);">0 dB</span><span style="color:var(--muted);">Unity gain — no change</span>
+              <span style="color:var(--accent);">-6 dB</span><span style="color:var(--muted);">Roughly half perceived loudness</span>
+              <span style="color:var(--accent);">-20 dB</span><span style="color:var(--muted);">Background/music duck level</span>
+              <span style="color:var(--accent);">-40 dB</span><span style="color:var(--muted);">Near-silent</span>
+              <span style="color:var(--accent);">-100 dB</span><span style="color:var(--muted);">Effectively silent</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── STREAMING ── -->
+      <div class="page" id="page-streaming">
+        <div class="section">
+          <div class="section-header">
+            <div class="section-icon">📡</div>
+            <div>
+              <div class="section-title">Streaming</div>
+              <div class="section-desc">Start, stop, and monitor OBS stream output</div>
+            </div>
+          </div>
+
+          <div class="live-bar" id="streamLiveBar">
+            <div class="live-dot"></div>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;">LIVE — Stream active</span>
+            <span id="streamTimecode" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);margin-left:auto;"></span>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-get">GET</span>
+              <span class="endpoint-path">/obs/stream/status</span>
+              <span class="endpoint-desc">Current stream state, timecode, bytes sent</span>
+            </div>
+            <div class="endpoint-body">
+              <button class="fire-btn" onclick="fireStreamStatus()">Get Status</button>
+              <div class="response-area" id="stream-status-resp"></div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-post">POST</span>
+              <span class="endpoint-path">/obs/stream/start</span>
+              <span class="endpoint-desc">Begin streaming to configured RTMP destination</span>
+            </div>
+            <div class="endpoint-body">
+              <button class="fire-btn" onclick="fire('POST','/obs/stream/start','stream-start-resp')" style="background:var(--green);color:#000;">▶ Start Stream</button>
+              <div class="response-area" id="stream-start-resp"></div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-post">POST</span>
+              <span class="endpoint-path">/obs/stream/stop</span>
+              <span class="endpoint-desc">Stop the active stream</span>
+            </div>
+            <div class="endpoint-body">
+              <button class="fire-btn danger" onclick="fire('POST','/obs/stream/stop','stream-stop-resp')">■ Stop Stream</button>
+              <div class="response-area" id="stream-stop-resp"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── RECORDING ── -->
+      <div class="page" id="page-recording">
+        <div class="section">
+          <div class="section-header">
+            <div class="section-icon">⏺</div>
+            <div>
+              <div class="section-title">Recording</div>
+              <div class="section-desc">Local recording control — start, stop, pause, resume<span class="new-tag">v1.1</span></div>
+            </div>
+          </div>
+
+          <div class="live-bar" id="recLiveBar">
+            <div class="live-dot" style="background:var(--red)"></div>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;">REC — Recording active</span>
+            <span id="recTimecode" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);margin-left:auto;"></span>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-get">GET</span>
+              <span class="endpoint-path">/obs/record/status</span>
+              <span class="endpoint-desc">Recording state — active, paused, timecode, bytes</span>
+            </div>
+            <div class="endpoint-body">
+              <button class="fire-btn" onclick="fireRecStatus()">Get Status</button>
+              <div class="response-area" id="rec-status-resp"></div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-post">POST</span>
+              <span class="endpoint-path">/obs/record/start</span>
+              <span class="endpoint-desc">Start recording to OBS output path</span>
+            </div>
+            <div class="endpoint-body">
+              <button class="fire-btn" onclick="fire('POST','/obs/record/start','rec-start-resp')" style="background:var(--red);color:#fff;">⏺ Start Recording</button>
+              <div class="response-area" id="rec-start-resp"></div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-post">POST</span>
+              <span class="endpoint-path">/obs/record/stop</span>
+              <span class="endpoint-desc">Stop recording — response includes output file path</span>
+            </div>
+            <div class="endpoint-body">
+              <button class="fire-btn danger" onclick="fire('POST','/obs/record/stop','rec-stop-resp')">■ Stop Recording</button>
+              <div class="response-area" id="rec-stop-resp"></div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-post">POST</span>
+              <span class="endpoint-path">/obs/record/pause</span>
+              <span class="endpoint-desc">Pause active recording</span>
+            </div>
+            <div class="endpoint-body">
+              <button class="fire-btn" onclick="fire('POST','/obs/record/pause','rec-pause-resp')" style="background:var(--surface);border:1px solid var(--border2);color:var(--text);">⏸ Pause</button>
+              <div class="response-area" id="rec-pause-resp"></div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-post">POST</span>
+              <span class="endpoint-path">/obs/record/resume</span>
+              <span class="endpoint-desc">Resume paused recording</span>
+            </div>
+            <div class="endpoint-body">
+              <button class="fire-btn" onclick="fire('POST','/obs/record/resume','rec-resume-resp')" style="background:var(--surface);border:1px solid var(--border2);color:var(--text);">▶ Resume</button>
+              <div class="response-area" id="rec-resume-resp"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── WEBSOCKET ── -->
+      <div class="page" id="page-websocket">
+        <div class="section">
+          <div class="section-header">
+            <div class="section-icon">⚡</div>
+            <div>
+              <div class="section-title">WebSocket Relay</div>
+              <div class="section-desc">Live bidirectional connection — send commands, receive push events</div>
+            </div>
+          </div>
+
+          <div class="ws-section">
+            <div class="ws-indicator">
+              <div class="status-dot" id="wsPageDot"></div>
+              <span id="wsPageStatus" style="color:var(--muted)">Not connected</span>
+              <button class="fire-btn ws-btn" onclick="connectWS()" style="margin-left:auto;padding:5px 12px;font-size:10px;">Connect WS</button>
+              <button class="fire-btn danger" onclick="disconnectWS()" style="padding:5px 12px;font-size:10px;">Disconnect</button>
+            </div>
+
+            <div style="padding:12px 16px;border-bottom:1px solid var(--border);">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Quick Commands</div>
+              <div class="ws-quick-btns">
+                <button class="ws-quick" onclick="wsSend({cmd:'get_status'})">get_status</button>
+                <button class="ws-quick" onclick="wsSend({cmd:'stream_start'})">stream_start</button>
+                <button class="ws-quick" onclick="wsSend({cmd:'stream_stop'})">stream_stop</button>
+                <button class="ws-quick" onclick="wsSend({cmd:'record_start'})">record_start</button>
+                <button class="ws-quick" onclick="wsSend({cmd:'record_stop'})">record_stop</button>
+                <button class="ws-quick" onclick="wsSend({cmd:'playlist_next'})">playlist_next</button>
+                <button class="ws-quick" onclick="wsSend({cmd:'playlist_prev'})">playlist_prev</button>
+                <button class="ws-quick" onclick="wsSend({cmd:'activate_preset',params:{name:'live'}})">preset:live</button>
+                <button class="ws-quick" onclick="wsSend({cmd:'activate_preset',params:{name:'brb'}})">preset:brb</button>
+                <button class="ws-quick" onclick="wsSend({cmd:'set_transition',params:{name:'Fade',duration_ms:500}})">fade 500ms</button>
+              </div>
+            </div>
+
+            <div class="ws-cmd-area">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);">Custom Command (JSON)</div>
+              <textarea id="wsCustomCmd" placeholder='{"cmd": "switch_scene", "params": {"scene_name": "BRB"}}'></textarea>
+              <button class="fire-btn ws-btn" onclick="wsCustomSend()">Send Command</button>
+            </div>
+
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);padding:12px 16px 6px;">Live Event Stream</div>
+            <div class="ws-stream" id="wsStream">
+              <div class="ws-msg" style="color:var(--muted);padding:12px 16px;">Connect to see live events...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── OSC ── -->
+      <div class="page" id="page-osc">
+        <div class="section">
+          <div class="section-header">
+            <div class="section-icon">📱</div>
+            <div>
+              <div class="section-title">OSC Bridge Status</div>
+              <div class="section-desc">TouchOSC / OSC UDP bridge connection info</div>
+            </div>
+          </div>
+
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-get">GET</span>
+              <span class="endpoint-path">/osc/status</span>
+              <span class="endpoint-desc">OSC bridge enabled, running, listen/reply ports</span>
+            </div>
+            <div class="endpoint-body">
+              <button class="fire-btn" onclick="fire('GET','/osc/status','osc-status-resp')">Send</button>
+              <div class="response-area" id="osc-status-resp"></div>
+            </div>
+          </div>
+
+          <div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:16px;margin-top:8px;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">TouchOSC Setup</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.7;">
+              1. In TouchOSC → Connections → OSC<br>
+              2. Host: <span class="inline-code">your server IP</span><br>
+              3. Send port: <span class="inline-code">9000</span> / Receive port: <span class="inline-code">9001</span><br>
+              4. Set <span class="inline-code">osc.client_host</span> in config.yaml to your device IP<br>
+              5. Send <span class="inline-code">/obs/state/query</span> (1.0) to request a state broadcast
+            </div>
+            <div style="margin-top:14px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);">Key Addresses</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:8px;font-family:'IBM Plex Mono',monospace;font-size:10px;">
+              <span style="color:var(--blue)">/obs/scene/live</span><span style="color:var(--muted)">Activate live preset</span>
+              <span style="color:var(--blue)">/obs/scene/brb</span><span style="color:var(--muted)">Activate BRB preset</span>
+              <span style="color:var(--blue)">/obs/playlist/next</span><span style="color:var(--muted)">Next track</span>
+              <span style="color:var(--blue)">/obs/volume/Mic</span><span style="color:var(--muted)">Mic volume (0.0–1.0)</span>
+              <span style="color:var(--blue)">/obs/mute/Mic</span><span style="color:var(--muted)">Mute mic (0 or 1)</span>
+              <span style="color:var(--blue)">/obs/stream/start</span><span style="color:var(--muted)">Start streaming</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── OVERLAY ── -->
+      <div class="page" id="page-overlay">
+        <div class="section">
+          <div class="section-header">
+            <div class="section-icon">📺</div>
+            <div>
+              <div class="section-title">Overlay Control</div>
+              <div class="section-desc">Timed title cards sourced from M3U track metadata — self-referential, position-safe</div>
+            </div>
+          </div>
+
+          <!-- Live status strip -->
+          <div id="overlayLiveBar" style="display:none;align-items:center;gap:12px;padding:10px 16px;background:rgba(232,255,71,0.07);border:1px solid rgba(232,255,71,0.25);border-radius:6px;margin-bottom:14px;font-family:'IBM Plex Mono',monospace;font-size:11px;">
+            <div style="width:8px;height:8px;border-radius:50%;background:var(--accent);animation:blink 1s infinite;flex-shrink:0;"></div>
+            <span style="color:var(--accent);">OVERLAY ACTIVE</span>
+            <span id="overlayLiveText" style="color:var(--text);margin-left:4px;"></span>
+            <span id="overlayTimer" style="margin-left:auto;color:var(--muted);"></span>
+          </div>
+
+          <!-- Status -->
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-get">GET</span>
+              <span class="endpoint-path">/overlay/status</span>
+              <span class="endpoint-desc">Active state, current text, timer remaining, full config</span>
+            </div>
+            <div class="endpoint-body">
+              <button class="fire-btn" onclick="fireOverlayStatus()">Get Status</button>
+              <div class="response-area" id="overlay-status-resp"></div>
+            </div>
+          </div>
+
+          <!-- Manual trigger -->
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-post">POST</span>
+              <span class="endpoint-path">/overlay/trigger</span>
+              <span class="endpoint-desc">Show any text for a configured duration — pop-up ads, announcements, custom cards</span>
+            </div>
+            <div class="endpoint-body">
+              <div class="field field-wide">
+                <label>Text to Display</label>
+                <input id="overlayText" placeholder="Now Playing: My Show" value="Now Playing: My Show">
+              </div>
+              <div class="field">
+                <label>Hold (sec)</label>
+                <input id="overlayHold" type="number" value="8" min="1" max="120" style="width:70px">
+              </div>
+              <div class="field">
+                <label>Delay (sec)</label>
+                <input id="overlayDelay" type="number" value="0" min="0" style="width:70px">
+              </div>
+              <button class="fire-btn" onclick="fireOverlayTrigger()">Trigger</button>
+              <div class="response-area" id="overlay-trigger-resp"></div>
+            </div>
+          </div>
+
+          <!-- Trigger current track -->
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-post">POST</span>
+              <span class="endpoint-path">/overlay/trigger-current</span>
+              <span class="endpoint-desc">Re-show overlay for the currently playing track using its M3U title — position-safe</span>
+            </div>
+            <div class="endpoint-body">
+              <button class="fire-btn" onclick="fire('POST','/overlay/trigger-current','overlay-current-resp')" style="background:var(--purple);color:#fff;">Show Current Track Title</button>
+              <div class="response-area" id="overlay-current-resp"></div>
+            </div>
+          </div>
+
+          <!-- Hide -->
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-post">POST</span>
+              <span class="endpoint-path">/overlay/hide</span>
+              <span class="endpoint-desc">Immediately cancel timer and hide overlay</span>
+            </div>
+            <div class="endpoint-body">
+              <button class="fire-btn danger" onclick="fire('POST','/overlay/hide','overlay-hide-resp')">Hide Now</button>
+              <div class="response-area" id="overlay-hide-resp"></div>
+            </div>
+          </div>
+
+          <!-- Config GET -->
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-get">GET</span>
+              <span class="endpoint-path">/overlay/config</span>
+              <span class="endpoint-desc">All current overlay settings</span>
+            </div>
+            <div class="endpoint-body">
+              <button class="fire-btn" onclick="fire('GET','/overlay/config','overlay-config-get-resp')">Get Config</button>
+              <div class="response-area" id="overlay-config-get-resp"></div>
+            </div>
+          </div>
+
+          <!-- Config editor -->
+          <div class="endpoint-card">
+            <div class="endpoint-row">
+              <span class="method m-post">POST</span>
+              <span class="endpoint-path">/overlay/config</span>
+              <span class="endpoint-desc">Update overlay settings at runtime — only pass fields you want to change</span>
+            </div>
+            <div class="endpoint-body" style="flex-wrap:wrap;gap:10px;">
+              <div class="field">
+                <label>OBS Source Name</label>
+                <input id="cfgSource" placeholder="TitleOverlay" value="TitleOverlay" style="width:140px">
+              </div>
+              <div class="field">
+                <label>Hold (sec)</label>
+                <input id="cfgHold" type="number" value="8" min="1" max="120" style="width:70px">
+              </div>
+              <div class="field">
+                <label>Delay (sec)</label>
+                <input id="cfgDelay" type="number" value="1" min="0" style="width:70px">
+              </div>
+              <div class="field">
+                <label>Fade In (ms)</label>
+                <input id="cfgFadeIn" type="number" value="500" min="0" style="width:80px">
+              </div>
+              <div class="field">
+                <label>Fade Out (ms)</label>
+                <input id="cfgFadeOut" type="number" value="500" min="0" style="width:80px">
+              </div>
+              <div class="field">
+                <label>Prefix Text</label>
+                <input id="cfgPrefix" placeholder="Now Playing: " value="" style="width:140px">
+              </div>
+              <div class="field">
+                <label>Suffix Text</label>
+                <input id="cfgSuffix" placeholder="" value="" style="width:140px">
+              </div>
+              <div class="field">
+                <label>Mode</label>
+                <select id="cfgMode" style="width:110px">
+                  <option value="current">current</option>
+                  <option value="next_up">next_up</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Auto-Trigger</label>
+                <select id="cfgAuto" style="width:90px">
+                  <option value="true">true</option>
+                  <option value="false">false</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Enabled</label>
+                <select id="cfgEnabled" style="width:90px">
+                  <option value="true">true</option>
+                  <option value="false">false</option>
+                </select>
+              </div>
+              <button class="fire-btn" onclick="fireOverlayConfig()">Update Config</button>
+              <div class="response-area" id="overlay-config-resp" style="width:100%;"></div>
+            </div>
+          </div>
+
+          <!-- Quick test panel -->
+          <div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:16px;margin-top:8px;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Quick Overlay Presets</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;">
+              <button class="fire-btn" onclick="quickOverlay('Now Playing','8','0')" style="background:var(--surface);border:1px solid var(--border2);color:var(--text);">Now Playing</button>
+              <button class="fire-btn" onclick="quickOverlayTrack()" style="background:var(--purple);color:#fff;">Current Track Title</button>
+              <button class="fire-btn" onclick="quickOverlay('Up Next: Episode 2','10','0')" style="background:var(--surface);border:1px solid var(--border2);color:var(--text);">Up Next card</button>
+              <button class="fire-btn" onclick="quickOverlay('📢 We\'ll be right back!','6','0')" style="background:var(--accent2);color:#fff;">BRB Banner</button>
+              <button class="fire-btn" onclick="quickOverlay('⚡ Special Offer — Visit example.com','12','0')" style="background:var(--surface);border:1px solid var(--border2);color:var(--text);">Pop-up Ad</button>
+              <button class="fire-btn danger" onclick="fire('POST','/overlay/hide','overlay-quick-resp')">Hide</button>
+            </div>
+            <div class="response-area" id="overlay-quick-resp" style="margin-top:10px;"></div>
+          </div>
+
+          <!-- M3U reference card -->
+          <div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:16px;margin-top:10px;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">#EXTOVERLAY M3U Tags</div>
+            <pre style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#9090a0;line-height:1.8;background:#080808;border:1px solid var(--border);border-radius:4px;padding:12px;overflow-x:auto;">#EXTINF:3600,Episode 01 — The Pilot
+#EXTOVERLAY:text=Now Playing: Episode One    ← custom text (overrides title)
+#EXTOVERLAY:hold=12                          ← visible for 12s (overrides global)
+#EXTOVERLAY:delay=4                          ← wait 4s before showing
+/media/ep01.mp4
+
+#EXTINF:30,Station Bumper
+#EXTOVERLAY:skip=1                           ← suppress overlay entirely
+/media/bumper.mp4
+
+#EXTINF:3600,Episode 02 — The Return
+<span style="color:var(--accent)"># No tags = use global config (hold_sec, delay_sec, prefix)</span>
+/media/ep02.mp4</pre>
+            <div style="margin-top:10px;font-size:11px;color:var(--muted);line-height:1.7;">
+              Tags are per-track. Overlay position tracking is self-referential — the manager reads
+              the current <span class="inline-code">PlaylistItem.metadata</span> at trigger time, so advancing the
+              playlist never desynchronises the overlay from the video.
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── OVERLAY SETUP ── -->
+      <div class="page" id="page-overlay-setup">
+        <div class="section">
+          <div class="section-header">
+            <div class="section-icon">🔧</div>
+            <div>
+              <div class="section-title">OBS Setup Guide</div>
+              <div class="section-desc">How to create and configure the TitleOverlay source</div>
+            </div>
+          </div>
+
+          <div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:20px;margin-bottom:14px;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:0.04em;margin-bottom:14px;">Step 1 — Create the Text Source</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+              1. In OBS, open your scene (the one where you want overlays to appear)<br>
+              2. In the Sources panel, click <span class="inline-code">+</span><br>
+              3. Choose <span class="inline-code">Text (GDI+)</span> on Windows, or <span class="inline-code">Text (FreeType 2)</span> on macOS/Linux<br>
+              4. Name it exactly: <span class="inline-code">TitleOverlay</span> (or match your <span class="inline-code">overlay.source_name</span> config)<br>
+              5. Click the <strong style="color:var(--text)">eye icon</strong> to hide it — it should start invisible<br>
+              6. Style it however you like — font, size, color, background, outline
+            </div>
+          </div>
+
+          <div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:20px;margin-bottom:14px;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:0.04em;margin-bottom:14px;">Step 2 — Position the Source</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+              Position the text box where you want the overlay to appear.<br>
+              Common placements:<br><br>
+              • <strong style="color:var(--text)">Lower-third</strong> — bottom 20% of frame, left or center aligned<br>
+              • <strong style="color:var(--text)">Top banner</strong> — top 10% of frame<br>
+              • <strong style="color:var(--text)">Corner bug</strong> — top-right corner, smaller font<br><br>
+              obs-relay only controls text content and source visibility — you own the layout entirely.
+            </div>
+          </div>
+
+          <div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:20px;margin-bottom:14px;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:0.04em;margin-bottom:14px;">Step 3 — Optional Fade Effect</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+              OBS doesn't support per-source CSS transitions natively, but you can get smooth fades using filters:<br><br>
+              1. Right-click <span class="inline-code">TitleOverlay</span> → Filters → Add<br>
+              2. Add <strong style="color:var(--text)">Color Correction</strong> (set Opacity to control fade)<br>
+              3. Or add a <strong style="color:var(--text)">Scroll</strong> filter to slide the text in<br>
+              4. Use OBS's built-in <strong style="color:var(--text)">Show/Hide Transitions</strong> (right-click source → Transition Override)<br><br>
+              <span class="inline-code">fade_in_ms</span> and <span class="inline-code">fade_out_ms</span> in the overlay config are stored and broadcast via WebSocket
+              so your own frontend can animate a matching overlay if you build one.
+            </div>
+          </div>
+
+          <div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:20px;margin-bottom:14px;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:0.04em;margin-bottom:14px;">Step 4 — Multi-Scene Setups</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+              If you have multiple scenes that all need overlays:<br><br>
+              • <strong style="color:var(--text)">Recommended:</strong> Add <span class="inline-code">TitleOverlay</span> to every scene that needs it<br>
+              • Set <span class="inline-code">overlay.scene_name</span> in config.yaml to target a specific scene<br>
+              • Leave <span class="inline-code">overlay.scene_name</span> empty to always use the current program scene<br>
+              • For a global overlay across all scenes, create it in a nested "Overlay" scene and reference it
+            </div>
+          </div>
+
+          <div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:20px;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:0.04em;margin-bottom:14px;">config.yaml Reference</div>
+            <pre style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#9090a0;line-height:1.8;background:#080808;border:1px solid var(--border);border-radius:4px;padding:12px;overflow-x:auto;">overlay:
+  enabled: true
+  source_name: TitleOverlay    <span style="color:var(--accent)"># must match OBS source name exactly</span>
+  scene_name: ""               <span style="color:var(--accent)"># empty = use current program scene</span>
+  hold_sec: 8.0                <span style="color:var(--accent)"># how long overlay stays visible</span>
+  delay_sec: 1.0               <span style="color:var(--accent)"># wait before showing (after track starts)</span>
+  fade_in_ms: 500              <span style="color:var(--accent)"># reference for UI/custom frontends</span>
+  fade_out_ms: 500
+  prefix: ""                   <span style="color:var(--accent)"># prepend to every title, e.g. "Now Playing: "</span>
+  suffix: ""                   <span style="color:var(--accent)"># append to every title</span>
+  mode: current                <span style="color:var(--accent)"># "current" or "next_up"</span>
+  auto_trigger: true           <span style="color:var(--accent)"># fire automatically on every track change</span>
+  next_up_prefix: "Up Next: "  <span style="color:var(--accent)"># prefix used in next_up mode</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── DEMOS ── -->
+      <div class="page" id="page-demos">
+        <div class="section">
+          <div class="section-header">
+            <div class="section-icon">🎭</div>
+            <div>
+              <div class="section-title">Demo Workflows</div>
+              <div class="section-desc">Concrete use cases showing what obs-relay enables — each runs a real sequence of API calls</div>
+            </div>
+          </div>
+
+          <div class="demo-grid">
+
+            <div class="demo-card">
+              <div class="demo-header">
+                <div class="demo-title">Broadcast Show Launch</div>
+                <span class="demo-badge">Streaming</span>
+              </div>
+              <div class="demo-body">
+                <div class="demo-desc">Full pre-show to live workflow. Validates playlist files, starts on standby, loads the intro playlist, then cuts to live and starts the stream.</div>
+                <ul class="demo-steps">
+                  <li><span class="step-num">1</span>Preflight: validate all playlist files exist</li>
+                  <li><span class="step-num">2</span>Activate standby scene (hold screen)</li>
+                  <li><span class="step-num">3</span>Load main playlist at track 0</li>
+                  <li><span class="step-num">4</span>Set transition to Fade 300ms</li>
+                  <li><span class="step-num">5</span>Activate live preset</li>
+                  <li><span class="step-num">6</span>Start stream</li>
+                </ul>
+                <div class="response-area" id="demo1-resp" style="margin-bottom:10px;font-size:10px;"></div>
+                <button class="run-demo-btn" onclick="runDemo1()">▶ Run Workflow</button>
+              </div>
+            </div>
+
+            <div class="demo-card">
+              <div class="demo-header">
+                <div class="demo-title">Pluto.tv Channel Switcher</div>
+                <span class="demo-badge">Playlists</span>
+              </div>
+              <div class="demo-body">
+                <div class="demo-desc">Hot-swap between two named playlists mid-show without stopping the stream. Mimics channel-switching on a continuous broadcast platform.</div>
+                <ul class="demo-steps">
+                  <li><span class="step-num">1</span>Get current playlist status</li>
+                  <li><span class="step-num">2</span>Switch to intermission playlist</li>
+                  <li><span class="step-num">3</span>Activate intermission preset</li>
+                  <li><span class="step-num">4</span>Wait 3s (simulated break)</li>
+                  <li><span class="step-num">5</span>Switch back to main playlist</li>
+                  <li><span class="step-num">6</span>Activate live preset</li>
+                </ul>
+                <div class="response-area" id="demo2-resp" style="margin-bottom:10px;font-size:10px;"></div>
+                <button class="run-demo-btn" onclick="runDemo2()">▶ Run Workflow</button>
+              </div>
+            </div>
+
+            <div class="demo-card">
+              <div class="demo-header">
+                <div class="demo-title">Record + Stream Simultaneously</div>
+                <span class="demo-badge">Recording</span>
+              </div>
+              <div class="demo-body">
+                <div class="demo-desc">Start both streaming and local recording at the same time. Useful for archiving a live broadcast while it airs. Shows how to poll both statuses.</div>
+                <ul class="demo-steps">
+                  <li><span class="step-num">1</span>Activate live preset</li>
+                  <li><span class="step-num">2</span>Start stream</li>
+                  <li><span class="step-num">3</span>Start recording</li>
+                  <li><span class="step-num">4</span>Poll both statuses</li>
+                  <li><span class="step-num">5</span>Stop recording</li>
+                  <li><span class="step-num">6</span>Stop stream</li>
+                </ul>
+                <div class="response-area" id="demo3-resp" style="margin-bottom:10px;font-size:10px;"></div>
+                <button class="run-demo-btn" onclick="runDemo3()">▶ Run Workflow</button>
+              </div>
+            </div>
+
+            <div class="demo-card">
+              <div class="demo-header">
+                <div class="demo-title">BRB Auto-Sequence</div>
+                <span class="demo-badge">Automation</span>
+              </div>
+              <div class="demo-body">
+                <div class="demo-desc">A scripted break: mute mic, cut to BRB screen, play an intermission loop for a fixed time, then auto-return to live. Template for break automation.</div>
+                <ul class="demo-steps">
+                  <li><span class="step-num">1</span>Mute microphone</li>
+                  <li><span class="step-num">2</span>Activate BRB preset</li>
+                  <li><span class="step-num">3</span>Activate intermission playlist</li>
+                  <li><span class="step-num">4</span>Wait 5s (simulate break time)</li>
+                  <li><span class="step-num">5</span>Activate live preset</li>
+                  <li><span class="step-num">6</span>Unmute microphone</li>
+                </ul>
+                <div class="response-area" id="demo4-resp" style="margin-bottom:10px;font-size:10px;"></div>
+                <button class="run-demo-btn" onclick="runDemo4()">▶ Run Workflow</button>
+              </div>
+            </div>
+
+            <div class="demo-card">
+              <div class="demo-header">
+                <div class="demo-title">WebSocket Live Dashboard</div>
+                <span class="demo-badge">Integration</span>
+              </div>
+              <div class="demo-body">
+                <div class="demo-desc">Demonstrates how a UI or custom app subscribes to obs-relay's WebSocket and stays in sync with OBS state changes — including changes made directly in the OBS UI.</div>
+                <ul class="demo-steps">
+                  <li><span class="step-num">1</span>Connect to WebSocket</span></li>
+                  <li><span class="step-num">2</span>Receive initial state on connect</li>
+                  <li><span class="step-num">3</span>Send get_status command</li>
+                  <li><span class="step-num">4</span>Subscribe to all push events</li>
+                  <li><span class="step-num">5</span>Fire a scene switch, observe event</li>
+                </ul>
+                <div class="response-area" id="demo5-resp" style="margin-bottom:10px;font-size:10px;"></div>
+                <button class="run-demo-btn" onclick="runDemo5()">▶ Run Workflow</button>
+              </div>
+            </div>
+
+            <div class="demo-card">
+              <div class="demo-header">
+                <div class="demo-title">Syndicated Title Cards</div>
+                <span class="demo-badge">Overlays</span>
+              </div>
+              <div class="demo-body">
+                <div class="demo-desc">Simulates a Pluto.tv-style continuous broadcast: show title cards on each track, pop-up ad mid-show, "Up Next" teaser, then BRB banner — all timed precisely.</div>
+                <ul class="demo-steps">
+                  <li><span class="step-num">1</span>Configure overlay: 8s hold, 1s delay, "Now Playing: " prefix</li>
+                  <li><span class="step-num">2</span>Activate playlist → title card auto-fires for track 0</li>
+                  <li><span class="step-num">3</span>Manually trigger pop-up ad banner (12s)</li>
+                  <li><span class="step-num">4</span>Advance to next track → new title card fires automatically</li>
+                  <li><span class="step-num">5</span>Trigger "Up Next" teaser card</li>
+                  <li><span class="step-num">6</span>BRB banner override</li>
+                </ul>
+                <div class="response-area" id="demo-overlay-resp" style="margin-bottom:10px;font-size:10px;"></div>
+                <button class="run-demo-btn" onclick="runDemoOverlay()">▶ Run Workflow</button>
+              </div>
+            </div>
+
+            <div class="demo-card">
+              <div class="demo-header">
+                <div class="demo-title">End-of-Show Shutdown</div>
+                <span class="demo-badge">Automation</span>
+              </div>
+              <div class="demo-body">
+                <div class="demo-desc">Graceful show teardown: cut to end card, stop the stream, stop recording, then return OBS to standby. A clean shutdown sequence in one workflow.</div>
+                <ul class="demo-steps">
+                  <li><span class="step-num">1</span>Activate end_card preset</li>
+                  <li><span class="step-num">2</span>Mute all audio sources</li>
+                  <li><span class="step-num">3</span>Wait 3s</li>
+                  <li><span class="step-num">4</span>Stop recording (if active)</li>
+                  <li><span class="step-num">5</span>Stop stream</li>
+                  <li><span class="step-num">6</span>Activate standby preset</li>
+                </ul>
+                <div class="response-area" id="demo6-resp" style="margin-bottom:10px;font-size:10px;"></div>
+                <button class="run-demo-btn" onclick="runDemo6()">▶ Run Workflow</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /api-panel -->
+
+    <!-- ── RIGHT PANEL ── -->
+    <div class="right-panel">
+      <div class="right-panel-tabs">
+        <div class="rptab active" onclick="setRpTab('curl')" id="rptab-curl">cURL</div>
+        <div class="rptab" onclick="setRpTab('log')" id="rptab-log">Event Log</div>
+        <div class="rptab" onclick="setRpTab('ws')" id="rptab-ws">WS Stream</div>
+      </div>
+
+      <!-- CURL tab -->
+      <div class="rp-content" id="rp-curl">
+        <div class="curl-box">
+          <div class="curl-label">
+            Last Request
+            <button class="copy-btn" id="copyCurl" onclick="copyCurl()">Copy</button>
+          </div>
+          <pre class="curl-code" id="curlDisplay"># Make a request to see the cURL command here</pre>
+        </div>
+        <div style="padding:14px 16px;">
+          <div class="curl-label" style="margin-bottom:10px;">cURL Examples</div>
+
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:6px;">Health check</div>
+          <pre class="curl-code" style="margin-bottom:12px;">curl http://localhost:8080/health</pre>
+
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:6px;">Switch scene</div>
+          <pre class="curl-code" style="margin-bottom:12px;">curl -X POST \
+  http://localhost:8080/obs/scene/Live</pre>
+
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:6px;">Set transition (500ms fade)</div>
+          <pre class="curl-code" style="margin-bottom:12px;">curl -X POST \
+  http://localhost:8080/obs/transition \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Fade","duration_ms":500}'</pre>
+
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:6px;">Activate playlist</div>
+          <pre class="curl-code" style="margin-bottom:12px;">curl -X POST \
+  http://localhost:8080/playlists/main/activate</pre>
+
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:6px;">With auth token</div>
+          <pre class="curl-code" style="margin-bottom:12px;">curl -H "Authorization: Bearer YOUR_KEY" \
+  http://localhost:8080/obs/scenes</pre>
+
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:6px;">WebSocket (wscat)</div>
+          <pre class="curl-code">wscat -c "ws://localhost:8080/ws"
+# with auth:
+wscat -c "ws://localhost:8080/ws?token=KEY"</pre>
+        </div>
+      </div>
+
+      <!-- LOG tab -->
+      <div class="rp-content" id="rp-log" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);">REQUEST LOG</span>
+          <button class="copy-btn" onclick="clearLog()">Clear</button>
+        </div>
+        <div class="event-log" id="eventLog">
+          <div class="log-entry" style="color:var(--muted);">No requests yet...</div>
+        </div>
+      </div>
+
+      <!-- WS tab -->
+      <div class="rp-content" id="rp-ws" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);">WS EVENTS</span>
+          <button class="copy-btn" onclick="clearWsLog()">Clear</button>
+        </div>
+        <div id="wsEventLog">
+          <div class="ws-msg" style="color:var(--muted);">Connect WebSocket to see events...</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- ── STATUS STRIP ── -->
+  <div class="status-strip">
+    <div class="ss-item">
+      <div class="status-dot" id="stripObsDot"></div>
+      <span>OBS:</span>
+      <span class="ss-val" id="stripObsStatus">—</span>
+    </div>
+    <div class="ss-item">
+      <span>Scene:</span>
+      <span class="ss-val" id="stripScene">—</span>
+    </div>
+    <div class="ss-item">
+      <span>Playlist:</span>
+      <span class="ss-val" id="stripPlaylist">—</span>
+    </div>
+    <div class="ss-item">
+      <span>Track:</span>
+      <span class="ss-val" id="stripTrack">—</span>
+    </div>
+    <div class="ss-item" style="margin-left:auto;">
+      <span id="stripStream" style="display:none;" class="ss-live">● LIVE</span>
+      <span id="stripRec" style="display:none;" class="ss-live" style="color:var(--red)">⏺ REC</span>
+    </div>
+  </div>
+</main>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+// State
+// ─────────────────────────────────────────────────────────────
+let ws = null;
+let lastCurl = '';
+const logEl = document.getElementById('eventLog');
+const wsLogEl = document.getElementById('wsEventLog');
+
+function getHost() {
+  return document.getElementById('serverHost').value.replace(/\/$/, '');
+}
+function getApiKey() {
+  return document.getElementById('apiKey').value.trim();
+}
+function authHeaders() {
+  const key = getApiKey();
+  const h = { 'Content-Type': 'application/json' };
+  if (key) h['Authorization'] = `Bearer ${key}`;
+  return h;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Navigation
+// ─────────────────────────────────────────────────────────────
+const pageMeta = {
+  system:            ['System Health',     'Connection status and OBS version info'],
+  scenes:            ['Scenes & Transitions', 'Switch scenes and control transitions'],
+  presets:           ['Scene Presets',     'Named broadcast states with side effects'],
+  studio:            ['Studio Mode',       'Preview → Program workflow'],
+  playlists:         ['Playlist Browser',  'View loaded playlists and validate files'],
+  'playlist-control':['Playback Control',  'Activate, navigate, and seek playlists'],
+  'playlist-manage': ['Create & Manage',   'Build playlists, upload .m3u, delete'],
+  audio:             ['Audio',             'Volume and mute control per OBS source'],
+  streaming:         ['Streaming',         'Start, stop, and monitor stream output'],
+  recording:         ['Recording',         'Local recording with start/stop/pause/resume'],
+  websocket:         ['WebSocket Relay',   'Live bidirectional connection'],
+  osc:               ['OSC Bridge',        'TouchOSC / OSC UDP bridge status'],
+  demos:             ['Demo Workflows',    'Concrete use cases for custom applications'],
+  overlay:           ['Overlay Control',    'Timed text overlays driven by M3U track titles'],
+  'overlay-setup':   ['OBS Setup Guide',   'How to create the TitleOverlay source in OBS'],
+};
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const page = document.getElementById('page-' + id);
+  if (page) page.classList.add('active');
+  const navItems = document.querySelectorAll('.nav-item');
+  navItems.forEach(n => {
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes(`'${id}'`)) {
+      n.classList.add('active');
+    }
+  });
+  const meta = pageMeta[id] || [id, ''];
+  document.getElementById('pageTitle').textContent = meta[0];
+  document.getElementById('pageSubtitle').textContent = meta[1];
+}
+
+function setTab(t) {
+  document.getElementById('tabUi').classList.toggle('active', t === 'ui');
+  document.getElementById('tabRaw').classList.toggle('active', t === 'raw');
+}
+
+function setRpTab(t) {
+  ['curl','log','ws'].forEach(tab => {
+    document.getElementById(`rptab-${tab}`).classList.toggle('active', tab === t);
+    document.getElementById(`rp-${tab}`).style.display = tab === t ? 'block' : 'none';
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+// Core request function
+// ─────────────────────────────────────────────────────────────
+async function req(method, path, body = null) {
+  const host = getHost();
+  const key  = getApiKey();
+  const url  = host + path;
+  const opts = { method, headers: authHeaders() };
+  if (body !== null) opts.body = JSON.stringify(body);
+
+  // Build cURL
+  let curl = `curl -X ${method} \\\n  ${url}`;
+  if (key) curl += ` \\\n  -H "Authorization: Bearer ${key}"`;
+  if (body !== null) {
+    curl += ` \\\n  -H "Content-Type: application/json" \\\n  -d '${JSON.stringify(body)}'`;
+  }
+  lastCurl = curl;
+  document.getElementById('curlDisplay').textContent = curl;
+  document.getElementById('copyCurl').textContent = 'Copy';
+
+  // Log entry
+  const now = new Date().toLocaleTimeString('en-US', {hour12: false});
+  const logEntry = document.createElement('div');
+  logEntry.className = 'log-entry';
+  logEntry.innerHTML = `<span class="log-time">${now}</span><span class="log-req">${method} ${path}</span>`;
+  if (body) {
+    const d = document.createElement('div');
+    d.className = 'log-data';
+    d.textContent = JSON.stringify(body);
+    logEntry.appendChild(d);
+  }
+  if (logEl.children[0]?.textContent === 'No requests yet...') logEl.innerHTML = '';
+  logEl.prepend(logEntry);
+
+  try {
+    const r = await fetch(url, opts);
+    const data = await r.json();
+    logEntry.innerHTML += ` <span class="${r.ok ? 'log-resp-ok' : 'log-resp-err'}">[${r.status}]</span>`;
+    updateStatusStrip(data);
+    return { ok: r.ok, status: r.status, data };
+  } catch(e) {
+    logEntry.innerHTML += ` <span class="log-resp-err">[ERROR: ${e.message}]</span>`;
+    return { ok: false, status: 0, data: { error: e.message } };
+  }
+}
+
+function showResp(elId, result) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.className = 'response-area ' + (result.ok ? 'ok' : 'err');
+  el.textContent = JSON.stringify(result.data, null, 2);
+}
+
+async function fire(method, path, respId, body = null) {
+  const r = await req(method, path, body);
+  showResp(respId, r);
+  return r;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Connection test
+// ─────────────────────────────────────────────────────────────
+async function testConnection() {
+  const dot = document.getElementById('httpDot');
+  const status = document.getElementById('httpStatus');
+  dot.className = 'status-dot';
+  status.textContent = 'connecting...';
+  const r = await req('GET', '/health');
+  if (r.ok) {
+    dot.className = 'status-dot connected';
+    status.style.color = 'var(--green)';
+    status.textContent = `connected — OBS ${r.data.obs_connected ? '✓' : '✗'}`;
+    document.getElementById('stripObsDot').className = 'status-dot ' + (r.data.obs_connected ? 'connected' : 'error');
+    document.getElementById('stripObsStatus').textContent = r.data.obs_connected ? 'connected' : 'disconnected';
+    connectWS();
+  } else {
+    dot.className = 'status-dot error';
+    status.style.color = 'var(--red)';
+    status.textContent = 'connection failed';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Specialized fire functions
+// ─────────────────────────────────────────────────────────────
+async function fireScene() {
+  const name = document.getElementById('switchSceneName').value.trim();
+  if (!name) return;
+  await fire('POST', `/obs/scene/${encodeURIComponent(name)}`, 'scene-switch-resp');
+}
+
+async function fireTransition() {
+  const name = document.getElementById('transName').value;
+  const dur  = document.getElementById('transDuration').value;
+  const body = {};
+  if (name) body.name = name;
+  if (dur)  body.duration_ms = parseInt(dur);
+  await fire('POST', '/obs/transition', 'trans-set-resp', body);
+}
+
+async function firePreset() {
+  const name = document.getElementById('presetName').value;
+  await fire('POST', `/presets/${name}/activate`, 'preset-resp');
+}
+
+async function quickPreset(name) {
+  await fire('POST', `/presets/${name}/activate`, 'preset-resp');
+}
+
+async function fireStudio() {
+  const enabled = document.getElementById('studioEnabled').value === 'true';
+  await fire('POST', `/obs/studio/enable?enabled=${enabled}`, 'studio-resp');
+}
+
+async function fireValidatePl() {
+  const name = document.getElementById('validatePlName').value.trim();
+  await fire('GET', `/playlists/${encodeURIComponent(name)}/validate`, 'pl-single-validate-resp');
+}
+
+async function fireActivatePl() {
+  const name = document.getElementById('activatePlName').value.trim();
+  const pos  = document.getElementById('activatePlPos').value || '0';
+  await fire('POST', `/playlists/${encodeURIComponent(name)}/activate?position=${pos}`, 'pl-activate-resp');
+}
+
+async function fireSeek() {
+  const pos = document.getElementById('seekPos').value || '0';
+  await fire('POST', `/playlists/seek/${pos}`, 'pl-seek-resp');
+}
+
+async function fireAutoAdvance() {
+  const enabled = document.getElementById('autoAdvance').value === 'true';
+  await fire('POST', '/playlists/auto-advance', 'auto-adv-resp', { enabled });
+}
+
+async function fireCreatePlaylist() {
+  const name  = document.getElementById('createPlName').value.trim();
+  const raw   = document.getElementById('createPlItems').value.trim();
+  const loop  = document.getElementById('createPlLoop').value === 'true';
+  const save  = document.getElementById('createPlSave').value === 'true';
+  const items = raw.split('\n').map(s => s.trim()).filter(Boolean);
+  await fire('POST', '/playlists/create', 'pl-create-resp', { name, items, loop, save });
+}
+
+async function fireUploadM3u() {
+  const input = document.getElementById('uploadM3u');
+  if (!input.files[0]) return;
+  const fd = new FormData();
+  fd.append('file', input.files[0]);
+  const url = getHost() + '/playlists/upload';
+  const headers = {};
+  const key = getApiKey();
+  if (key) headers['Authorization'] = `Bearer ${key}`;
+  const r = await fetch(url, { method: 'POST', headers, body: fd });
+  const data = await r.json();
+  showResp('pl-upload-resp', { ok: r.ok, data });
+  lastCurl = `curl -X POST ${url} \\\n  -F "file=@${input.files[0].name}"`;
+  document.getElementById('curlDisplay').textContent = lastCurl;
+}
+
+async function fireDeletePlaylist() {
+  const name = document.getElementById('deletePlName').value.trim();
+  if (!name) return;
+  await fire('DELETE', `/playlists/${encodeURIComponent(name)}`, 'pl-delete-resp');
+}
+
+async function fireMediaStatus() {
+  const name = document.getElementById('mediaStatusSrc').value.trim();
+  await fire('GET', `/obs/source/${encodeURIComponent(name)}/media`, 'media-status-resp');
+}
+
+async function fireVolume() {
+  const name = document.getElementById('volSrcName').value.trim();
+  const db   = parseFloat(document.getElementById('volDb').value);
+  await fire('POST', `/obs/source/${encodeURIComponent(name)}/volume`, 'vol-resp', { volume_db: db });
+}
+
+async function fireMute() {
+  const name  = document.getElementById('muteSrcName').value.trim();
+  const muted = document.getElementById('muteVal').value === 'true';
+  await fire('POST', `/obs/source/${encodeURIComponent(name)}/mute`, 'mute-resp', { muted });
+}
+
+async function fireStreamStatus() {
+  const r = await fire('GET', '/obs/stream/status', 'stream-status-resp');
+  if (r.ok && r.data.active) {
+    document.getElementById('streamLiveBar').classList.add('visible');
+    document.getElementById('streamTimecode').textContent = r.data.timecode;
+  }
+}
+
+async function fireRecStatus() {
+  const r = await fire('GET', '/obs/record/status', 'rec-status-resp');
+  if (r.ok && r.data.active) {
+    document.getElementById('recLiveBar').classList.add('visible');
+    document.getElementById('recTimecode').textContent = r.data.timecode;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// WebSocket
+// ─────────────────────────────────────────────────────────────
+function connectWS() {
+  if (ws && ws.readyState === WebSocket.OPEN) return;
+  const host = getHost().replace(/^http/, 'ws');
+  const key  = getApiKey();
+  const url  = host + '/ws' + (key ? `?token=${encodeURIComponent(key)}` : '');
+
+  try {
+    ws = new WebSocket(url);
+  } catch(e) {
+    setWsStatus(false); return;
+  }
+
+  ws.onopen = () => {
+    setWsStatus(true);
+    addWsMsg('connected', 'WebSocket connected');
+  };
+
+  ws.onmessage = (e) => {
+    try {
+      const msg = JSON.parse(e.data);
+      addWsMsg(msg.event || 'message', JSON.stringify(msg.data || msg, null, 0));
+      handleWsEvent(msg);
+    } catch(_) {
+      addWsMsg('raw', e.data);
+    }
+  };
+
+  ws.onclose = () => {
+    setWsStatus(false);
+    addWsMsg('disconnected', 'WebSocket closed');
+  };
+
+  ws.onerror = () => setWsStatus(false);
+}
+
+function disconnectWS() {
+  if (ws) { ws.close(); ws = null; }
+  setWsStatus(false);
+}
+
+function setWsStatus(connected) {
+  const dot1 = document.getElementById('wsDot');
+  const st1  = document.getElementById('wsStatus');
+  const dot2 = document.getElementById('wsPageDot');
+  const st2  = document.getElementById('wsPageStatus');
+  [dot1, dot2].forEach(d => d.className = 'status-dot ' + (connected ? 'ws-live' : ''));
+  const msg = connected ? 'ws live' : 'ws disconnected';
+  const col = connected ? 'var(--blue)' : 'var(--muted)';
+  [st1, st2].forEach(s => { s.textContent = msg; s.style.color = col; });
+}
+
+function addWsMsg(event, data) {
+  const now = new Date().toLocaleTimeString('en-US', {hour12: false, hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  const el = document.createElement('div');
+  el.className = 'ws-msg';
+  el.innerHTML = `<span class="ts">${now}</span><span class="evt">${event}</span>${data ? `\n<span class="dat">${data}</span>` : ''}`;
+
+  // Add to ws tab in right panel
+  const wsLog = document.getElementById('wsEventLog');
+  if (wsLog.children[0]?.style.color === 'var(--muted)') wsLog.innerHTML = '';
+  wsLog.prepend(el.cloneNode(true));
+
+  // Add to ws stream on websocket page
+  const stream = document.getElementById('wsStream');
+  if (stream.children[0]?.style.color === 'var(--muted)') stream.innerHTML = '';
+  stream.prepend(el);
+}
+
+function handleWsEvent(msg) {
+  const data = msg.data || {};
+  if (msg.event === 'scene_switched' || msg.event === 'scene_changed_external') {
+    if (data.scene) document.getElementById('stripScene').textContent = data.scene;
+  }
+  if (msg.event === 'playlist_activated' || msg.event === 'track_changed') {
+    if (data.playlist) document.getElementById('stripPlaylist').textContent = data.playlist;
+    if (data.track)    document.getElementById('stripTrack').textContent = data.track;
+  }
+  if (msg.event === 'stream_started') {
+    document.getElementById('stripStream').style.display = 'inline';
+    document.getElementById('streamLiveBar').classList.add('visible');
+  }
+  if (msg.event === 'stream_stopped') {
+    document.getElementById('stripStream').style.display = 'none';
+    document.getElementById('streamLiveBar').classList.remove('visible');
+  }
+  if (msg.event === 'recording_started') {
+    document.getElementById('stripRec').style.display = 'inline';
+    document.getElementById('recLiveBar').classList.add('visible');
+  }
+  if (msg.event === 'recording_stopped') {
+    document.getElementById('stripRec').style.display = 'none';
+    document.getElementById('recLiveBar').classList.remove('visible');
+  }
+}
+
+function wsSend(obj) {
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    connectWS();
+    setTimeout(() => wsSend(obj), 800);
+    return;
+  }
+  const msg = JSON.stringify(obj);
+  ws.send(msg);
+  lastCurl = `# WebSocket command:\n${msg}`;
+  document.getElementById('curlDisplay').textContent = lastCurl;
+}
+
+function wsCustomSend() {
+  const raw = document.getElementById('wsCustomCmd').value.trim();
+  try {
+    const obj = JSON.parse(raw);
+    wsSend(obj);
+  } catch(e) {
+    addWsMsg('error', 'Invalid JSON: ' + e.message);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Utility
+// ─────────────────────────────────────────────────────────────
+function updateStatusStrip(data) {
+  if (!data) return;
+  if (data.obs_connected !== undefined) {
+    document.getElementById('stripObsDot').className = 'status-dot ' + (data.obs_connected ? 'connected' : 'error');
+    document.getElementById('stripObsStatus').textContent = data.obs_connected ? 'connected' : 'disconnected';
+  }
+  if (data.active !== undefined && data.timecode !== undefined) {
+    // Could be stream or recording status — handled by WS events
+  }
+  if (data.active_playlist) document.getElementById('stripPlaylist').textContent = data.active_playlist;
+  if (data.current_item?.title) document.getElementById('stripTrack').textContent = data.current_item.title;
+}
+
+function copyCurl() {
+  navigator.clipboard.writeText(lastCurl).then(() => {
+    const btn = document.getElementById('copyCurl');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1800);
+  });
+}
+
+function clearLog() {
+  logEl.innerHTML = '<div class="log-entry" style="color:var(--muted);">Log cleared.</div>';
+}
+
+function clearWsLog() {
+  document.getElementById('wsEventLog').innerHTML = '<div class="ws-msg" style="color:var(--muted);">Log cleared...</div>';
+  document.getElementById('wsStream').innerHTML = '<div class="ws-msg" style="color:var(--muted);">Log cleared...</div>';
+}
+
+// ─────────────────────────────────────────────────────────────
+// Demo Workflows
+// ─────────────────────────────────────────────────────────────
+function demoLog(id, msg, type = 'info') {
+  const el = document.getElementById(`demo${id}-resp`);
+  if (!el) return;
+  const colors = { ok: 'var(--green)', err: 'var(--red)', info: 'var(--accent)' };
+  el.style.display = 'block';
+  el.className = 'response-area info';
+  el.innerHTML += `<span style="color:${colors[type]}">${msg}</span>\n`;
+  el.scrollTop = el.scrollHeight;
+}
+function demoReset(id) {
+  const el = document.getElementById(`demo${id}-resp`);
+  if (el) { el.textContent = ''; el.className = 'response-area info'; el.style.display = 'block'; }
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function runDemo1() {
+  demoReset(1);
+  demoLog(1, '▶ Broadcast Show Launch', 'info');
+  const r1 = await req('GET', '/playlists/validate');
+  demoLog(1, `[1] Preflight: ${r1.data.all_valid ? '✓ all files OK' : '✗ missing files'}`, r1.data.all_valid ? 'ok' : 'err');
+  const r2 = await req('POST', `/presets/standby/activate`);
+  demoLog(1, `[2] Standby: ${r2.ok ? '✓' : '✗ ' + JSON.stringify(r2.data)}`, r2.ok ? 'ok' : 'err');
+  const r3 = await req('POST', '/playlists/main/activate?position=0');
+  demoLog(1, `[3] Load main playlist: ${r3.ok ? '✓ ' + (r3.data.track || '') : '✗'}`, r3.ok ? 'ok' : 'err');
+  const r4 = await req('POST', '/obs/transition', { name: 'Fade', duration_ms: 300 });
+  demoLog(1, `[4] Transition → Fade 300ms: ${r4.ok ? '✓' : '✗'}`, r4.ok ? 'ok' : 'err');
+  const r5 = await req('POST', '/presets/live/activate');
+  demoLog(1, `[5] Go live: ${r5.ok ? '✓' : '✗'}`, r5.ok ? 'ok' : 'err');
+  const r6 = await req('POST', '/obs/stream/start');
+  demoLog(1, `[6] Stream: ${r6.ok ? '✓ ' + r6.data.status : '✗ ' + JSON.stringify(r6.data)}`, r6.ok ? 'ok' : 'err');
+  demoLog(1, '✓ Workflow complete', 'ok');
+}
+
+async function runDemo2() {
+  demoReset(2);
+  demoLog(2, '▶ Pluto.tv Channel Switcher', 'info');
+  const r1 = await req('GET', '/playlists/status');
+  demoLog(2, `[1] Current: ${r1.data.active_playlist || 'none'} @ track ${r1.data.position || 0}`, 'ok');
+  const r2 = await req('POST', '/playlists/intermission/activate');
+  demoLog(2, `[2] → intermission: ${r2.ok ? '✓' : '✗ (playlist not found — create it first)'}`, r2.ok ? 'ok' : 'err');
+  const r3 = await req('POST', '/presets/intermission/activate');
+  demoLog(2, `[3] Preset: ${r3.ok ? '✓' : '✗'}`, r3.ok ? 'ok' : 'err');
+  demoLog(2, '[4] Simulating 3s break...', 'info');
+  await sleep(3000);
+  const r5 = await req('POST', '/playlists/main/activate');
+  demoLog(2, `[5] → main playlist: ${r5.ok ? '✓' : '✗'}`, r5.ok ? 'ok' : 'err');
+  const r6 = await req('POST', '/presets/live/activate');
+  demoLog(2, `[6] Back live: ${r6.ok ? '✓' : '✗'}`, r6.ok ? 'ok' : 'err');
+  demoLog(2, '✓ Channel switch complete', 'ok');
+}
+
+async function runDemo3() {
+  demoReset(3);
+  demoLog(3, '▶ Record + Stream Simultaneously', 'info');
+  const r1 = await req('POST', '/presets/live/activate');
+  demoLog(3, `[1] Go live: ${r1.ok ? '✓' : '✗'}`, r1.ok ? 'ok' : 'err');
+  const r2 = await req('POST', '/obs/stream/start');
+  demoLog(3, `[2] Stream: ${r2.ok ? '✓' : '✗ ' + JSON.stringify(r2.data)}`, r2.ok ? 'ok' : 'err');
+  const r3 = await req('POST', '/obs/record/start');
+  demoLog(3, `[3] Record: ${r3.ok ? '✓' : '✗ ' + JSON.stringify(r3.data)}`, r3.ok ? 'ok' : 'err');
+  await sleep(1000);
+  const r4s = await req('GET', '/obs/stream/status');
+  const r4r = await req('GET', '/obs/record/status');
+  demoLog(3, `[4] Stream: ${r4s.data.active ? 'active (' + r4s.data.timecode + ')' : 'inactive'}`, r4s.data.active ? 'ok' : 'err');
+  demoLog(3, `[4] Record: ${r4r.data.active ? 'active (' + r4r.data.timecode + ')' : 'inactive'}`, r4r.data.active ? 'ok' : 'err');
+  const r5 = await req('POST', '/obs/record/stop');
+  demoLog(3, `[5] Stop record: ${r5.ok ? '✓ → ' + (r5.data.output_path || 'path in OBS') : '✗'}`, r5.ok ? 'ok' : 'err');
+  const r6 = await req('POST', '/obs/stream/stop');
+  demoLog(3, `[6] Stop stream: ${r6.ok ? '✓' : '✗'}`, r6.ok ? 'ok' : 'err');
+  demoLog(3, '✓ Workflow complete', 'ok');
+}
+
+async function runDemo4() {
+  demoReset(4);
+  demoLog(4, '▶ BRB Auto-Sequence', 'info');
+  const r1 = await req('POST', '/obs/source/Mic/mute', { muted: true });
+  demoLog(4, `[1] Mute Mic: ${r1.ok ? '✓' : '✗ (check source name)'}`, r1.ok ? 'ok' : 'err');
+  const r2 = await req('POST', '/presets/brb/activate');
+  demoLog(4, `[2] BRB preset: ${r2.ok ? '✓' : '✗'}`, r2.ok ? 'ok' : 'err');
+  const r3 = await req('POST', '/playlists/intermission/activate');
+  demoLog(4, `[3] Intermission playlist: ${r3.ok ? '✓' : '✗ (create intermission.m3u first)'}`, r3.ok ? 'ok' : 'err');
+  demoLog(4, '[4] Break in progress — 5s...', 'info');
+  for (let i = 5; i > 0; i--) {
+    await sleep(1000);
+    demoLog(4, `    ${i}s remaining`, 'info');
+  }
+  const r5 = await req('POST', '/presets/live/activate');
+  demoLog(4, `[5] Back live: ${r5.ok ? '✓' : '✗'}`, r5.ok ? 'ok' : 'err');
+  const r6 = await req('POST', '/obs/source/Mic/mute', { muted: false });
+  demoLog(4, `[6] Unmute Mic: ${r6.ok ? '✓' : '✗'}`, r6.ok ? 'ok' : 'err');
+  demoLog(4, '✓ BRB sequence complete', 'ok');
+}
+
+async function runDemo5() {
+  demoReset(5);
+  demoLog(5, '▶ WebSocket Live Dashboard Demo', 'info');
+  connectWS();
+  demoLog(5, '[1] WebSocket connected', 'ok');
+  await sleep(500);
+  demoLog(5, '[2] Receiving initial state on connect event', 'ok');
+  await sleep(200);
+  wsSend({ cmd: 'get_status' });
+  demoLog(5, '[3] Sent get_status command via WS', 'ok');
+  demoLog(5, '[4] Subscribed to all push events', 'ok');
+  await sleep(300);
+  const r = await req('POST', '/presets/live/activate');
+  demoLog(5, `[5] Scene switch fired — observe event in WS Stream or right panel`, r.ok ? 'ok' : 'err');
+  demoLog(5, '✓ Open WebSocket tab or WS Stream panel to see events', 'ok');
+  showPage('websocket');
+}
+
+async function runDemo6() {
+  demoReset(6);
+  demoLog(6, '▶ End-of-Show Shutdown', 'info');
+  const r1 = await req('POST', '/presets/end_card/activate');
+  demoLog(6, `[1] End card: ${r1.ok ? '✓' : '✗'}`, r1.ok ? 'ok' : 'err');
+  const r2 = await req('POST', '/obs/source/Mic/mute', { muted: true });
+  demoLog(6, `[2] Mute Mic: ${r2.ok ? '✓' : '✗'}`, r2.ok ? 'ok' : 'err');
+  demoLog(6, '[3] Waiting 3s...', 'info');
+  await sleep(3000);
+  const recSt = await req('GET', '/obs/record/status');
+  if (recSt.data.active) {
+    const r4 = await req('POST', '/obs/record/stop');
+    demoLog(6, `[4] Stop record: ${r4.ok ? '✓ → ' + (r4.data.output_path || 'saved') : '✗'}`, r4.ok ? 'ok' : 'err');
+  } else {
+    demoLog(6, '[4] Recording not active — skip', 'info');
+  }
+  const r5 = await req('POST', '/obs/stream/stop');
+  demoLog(6, `[5] Stop stream: ${r5.ok ? '✓' : '✗'}`, r5.ok ? 'ok' : 'err');
+  const r6 = await req('POST', '/presets/standby/activate');
+  demoLog(6, `[6] Standby: ${r6.ok ? '✓' : '✗'}`, r6.ok ? 'ok' : 'err');
+  demoLog(6, '✓ Show shutdown complete', 'ok');
+}
+
+// ─────────────────────────────────────────────────────────────
+// Overlay functions
+// ─────────────────────────────────────────────────────────────
+let overlayPollInterval = null;
+
+async function fireOverlayStatus() {
+  const r = await fire('GET', '/overlay/status', 'overlay-status-resp');
+  if (r.ok) updateOverlayLiveBar(r.data);
+  return r;
+}
+
+async function fireOverlayTrigger() {
+  const text  = document.getElementById('overlayText').value.trim();
+  const hold  = parseFloat(document.getElementById('overlayHold').value);
+  const delay = parseFloat(document.getElementById('overlayDelay').value);
+  if (!text) return;
+  const body = { text, hold_sec: hold, delay_sec: delay };
+  const r = await fire('POST', '/overlay/trigger', 'overlay-trigger-resp', body);
+  if (r.ok) {
+    updateOverlayLiveBar({ active: true, current_text: text, timer_remaining: hold });
+    startOverlayPoll();
+  }
+  return r;
+}
+
+async function fireOverlayConfig() {
+  const body = {
+    source_name: document.getElementById('cfgSource').value.trim() || undefined,
+    hold_sec:    parseFloat(document.getElementById('cfgHold').value) || undefined,
+    delay_sec:   parseFloat(document.getElementById('cfgDelay').value),
+    fade_in_ms:  parseInt(document.getElementById('cfgFadeIn').value) || undefined,
+    fade_out_ms: parseInt(document.getElementById('cfgFadeOut').value) || undefined,
+    prefix:      document.getElementById('cfgPrefix').value,
+    suffix:      document.getElementById('cfgSuffix').value,
+    mode:        document.getElementById('cfgMode').value,
+    auto_trigger: document.getElementById('cfgAuto').value === 'true',
+    enabled:      document.getElementById('cfgEnabled').value === 'true',
+  };
+  // Strip undefined
+  Object.keys(body).forEach(k => body[k] === undefined && delete body[k]);
+  await fire('POST', '/overlay/config', 'overlay-config-resp', body);
+}
+
+async function quickOverlay(text, hold, delay) {
+  const body = { text, hold_sec: parseFloat(hold), delay_sec: parseFloat(delay) };
+  const r = await fire('POST', '/overlay/trigger', 'overlay-quick-resp', body);
+  if (r.ok) {
+    updateOverlayLiveBar({ active: true, current_text: text, timer_remaining: parseFloat(hold) });
+    startOverlayPoll();
+  }
+}
+
+async function quickOverlayTrack() {
+  const r = await fire('POST', '/overlay/trigger-current', 'overlay-quick-resp');
+  if (r.ok && r.data.text) {
+    updateOverlayLiveBar({ active: true, current_text: r.data.text, timer_remaining: r.data.hold_sec });
+    startOverlayPoll();
+  }
+}
+
+function updateOverlayLiveBar(data) {
+  const bar    = document.getElementById('overlayLiveBar');
+  const textEl = document.getElementById('overlayLiveText');
+  const timer  = document.getElementById('overlayTimer');
+  if (!bar) return;
+  if (data.active) {
+    bar.style.display = 'flex';
+    textEl.textContent = '"' + (data.current_text || '') + '"';
+    timer.textContent  = data.timer_remaining > 0 ? data.timer_remaining.toFixed(1) + 's remaining' : '';
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+function startOverlayPoll() {
+  if (overlayPollInterval) return; // already polling
+  overlayPollInterval = setInterval(async () => {
+    const r = await req('GET', '/overlay/status');
+    if (r.ok) {
+      updateOverlayLiveBar(r.data);
+      if (!r.data.active) {
+        clearInterval(overlayPollInterval);
+        overlayPollInterval = null;
+      }
+    }
+  }, 500);
+}
+
+async function runDemoOverlay() {
+  const id = 'demo-overlay';
+  demoReset(id);
+  demoLog(id, '▶ Syndicated Title Cards Demo', 'info');
+
+  // Step 1 — configure overlay
+  const r1 = await req('POST', '/overlay/config', {
+    hold_sec: 8, delay_sec: 1, prefix: 'Now Playing: ',
+    mode: 'current', auto_trigger: true, enabled: true
+  });
+  demoLog(id, `[1] Overlay config set: ${r1.ok ? '✓ hold=8s delay=1s prefix="Now Playing: "' : '✗ ' + JSON.stringify(r1.data)}`, r1.ok ? 'ok' : 'err');
+
+  // Step 2 — activate playlist (auto_trigger fires title card for track 0)
+  const r2 = await req('POST', '/playlists/main/activate?position=0');
+  demoLog(id, `[2] Playlist activated: ${r2.ok ? '✓ track: ' + (r2.data.track || 'unknown') : '✗'}`, r2.ok ? 'ok' : 'err');
+  if (r2.ok && r2.data.track) {
+    demoLog(id, `    → title card triggered: "Now Playing: ${r2.data.track}"`, 'ok');
+    updateOverlayLiveBar({ active: true, current_text: 'Now Playing: ' + r2.data.track, timer_remaining: 8 });
+    startOverlayPoll();
+  }
+  await sleep(2000);
+
+  // Step 3 — manual pop-up ad
+  const adText = '⚡ Special Offer — Limited Time Deal';
+  const r3 = await req('POST', '/overlay/trigger', { text: adText, hold_sec: 12, delay_sec: 0 });
+  demoLog(id, `[3] Pop-up ad: ${r3.ok ? '✓ "' + adText + '" 12s' : '✗'}`, r3.ok ? 'ok' : 'err');
+  await sleep(3000);
+
+  // Step 4 — next track (auto_trigger fires new title card)
+  const r4 = await req('POST', '/playlists/next');
+  demoLog(id, `[4] Advanced to next track: ${r4.ok ? '✓ ' + (r4.data.track || '') : '✗'}`, r4.ok ? 'ok' : 'err');
+  if (r4.ok && r4.data.track) {
+    demoLog(id, `    → title card auto-triggered: "Now Playing: ${r4.data.track}"`, 'ok');
+  }
+  await sleep(2500);
+
+  // Step 5 — peek-ahead "Up Next" card
+  const r5status = await req('GET', '/playlists/status');
+  const pos = r5status.data.position || 0;
+  const total = r5status.data.total_items || 0;
+  const upNextText = pos + 1 < total
+    ? 'Up Next: Episode ' + (pos + 2)
+    : 'Up Next: Starting Over';
+  const r5 = await req('POST', '/overlay/trigger', { text: upNextText, hold_sec: 7, delay_sec: 0 });
+  demoLog(id, `[5] Up Next teaser: ${r5.ok ? '✓ "' + upNextText + '"' : '✗'}`, r5.ok ? 'ok' : 'err');
+  await sleep(2000);
+
+  // Step 6 — BRB banner override (cancels any active timer)
+  const r6 = await req('POST', '/overlay/trigger', { text: '📺 Be Right Back — Continuing Shortly', hold_sec: 6, delay_sec: 0 });
+  demoLog(id, `[6] BRB banner: ${r6.ok ? '✓ overrode previous overlay' : '✗'}`, r6.ok ? 'ok' : 'err');
+
+  demoLog(id, '✓ Overlay workflow complete — check OBS TitleOverlay source', 'ok');
+}
+
+// Hook WS overlay events into live bar
+const _origHandleWsEvent = handleWsEvent;
+function handleWsEvent(msg) {
+  _origHandleWsEvent(msg);
+  if (msg.event === 'overlay_triggered' && msg.data) {
+    updateOverlayLiveBar({ active: true, current_text: msg.data.text, timer_remaining: msg.data.hold_sec });
+    startOverlayPoll();
+  }
+  if (msg.event === 'overlay_hidden') {
+    updateOverlayLiveBar({ active: false });
+    if (overlayPollInterval) { clearInterval(overlayPollInterval); overlayPollInterval = null; }
+  }
+}
+
+</script>
+</body>
+</html>

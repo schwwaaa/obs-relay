@@ -1,0 +1,48 @@
+# obs-relay configuration example
+# Copy this file to config.yaml and fill in your values.
+# config.yaml is in .gitignore — never commit it with real credentials.
+
+obs:
+  host: localhost
+  port: 4455
+  password: ""                  # Set your OBS WebSocket password here
+  reconnect_interval: 5.0
+  max_reconnect_attempts: 0     # 0 = infinite
+
+api:
+  host: "0.0.0.0"
+  port: 8080
+  api_key: ""                   # Set a token to require auth on all requests
+  cors_origins:
+    - "*"
+  log_level: info
+
+osc:
+  enabled: true
+  listen_host: "0.0.0.0"
+  listen_port: 9000             # TouchOSC sends TO this port
+  reply_port: 9001              # obs-relay sends feedback TO this port
+  client_host: "255.255.255.255" # Change to your device IP for direct feedback
+
+playlist:
+  directory: playlists          # Folder containing .m3u files
+  default_playlist: ""          # e.g. "main" to auto-load on startup
+  loop: true
+  source_name: MediaSource      # Must match your OBS Media Source input name
+
+# ── Custom scene presets (optional) ──────────────────────────────────────────
+# Built-in presets: live, brb, standby, intermission, end_card
+# Add your own here or override the defaults.
+#
+# scenes:
+#   presets:
+#     - name: custom_scene
+#       scene_name: "My OBS Scene"     # Must match OBS exactly
+#       description: "A custom state"
+#       playlist: my_playlist          # Optional: activate playlist when fired
+#       hotkey: /obs/scene/custom      # OSC address
+#       actions:
+#         - type: set_mute
+#           params:
+#             source_name: Mic
+#             muted: true

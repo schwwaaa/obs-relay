@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>obs-relay — Getting Started</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Bebas+Neue&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg:      #f5f3ee;
+  --paper:   #fdfcf8;
+  --border:  #ddd9d0;
+  --border2: #c8c3b8;
+  --text:    #1a1814;
+  --muted:   #7a7568;
+  --dim:     #b0aa9e;
+  --accent:  #c8380a;   /* broadcast red */
+  --accent2: #2a6aad;   /* hyperlink blue */
+  --green:   #1a7a3a;
+  --code-bg: #1a1814;
+  --code-text: #d4cfc5;
+  --yellow-bg: #fff8e8;
+  --yellow-border: #e8d48a;
+  --red-bg:  #fff0ee;
+  --red-border: #f0b0a0;
+  --blue-bg: #eef4ff;
+  --blue-border: #a8c4e8;
+  --green-bg: #eefbf2;
+  --green-border: #8acca8;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* ── LAYOUT ── */
+.container {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ── HEADER ── */
+header {
+  background: var(--code-bg);
+  color: #f0ece4;
+  padding: 48px 0 40px;
+  margin-bottom: 48px;
+}
+.header-inner {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+.header-eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #7a7060;
+  margin-bottom: 10px;
+}
+.header-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 52px;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.header-title span { color: #e8a060; }
+.header-subtitle {
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+  font-size: 18px;
+  color: #a09880;
+  margin-bottom: 24px;
+}
+.header-version {
+  display: inline-block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  padding: 4px 10px;
+  border-radius: 3px;
+  color: #9090a0;
+  letter-spacing: 0.08em;
+}
+
+/* ── TOC ── */
+.toc {
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px 24px;
+  margin-bottom: 40px;
+}
+.toc-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+.toc ol {
+  list-style: decimal;
+  padding-left: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px 24px;
+}
+.toc li { font-size: 13px; }
+.toc a { color: var(--accent2); text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+
+/* ── SECTIONS ── */
+section {
+  margin-bottom: 52px;
+  scroll-margin-top: 24px;
+}
+.section-num {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+h2 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 32px;
+  letter-spacing: 0.04em;
+  margin-bottom: 16px;
+  color: var(--text);
+  border-bottom: 2px solid var(--text);
+  padding-bottom: 6px;
+}
+h3 {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  margin: 24px 0 10px;
+  color: var(--text);
+}
+p { margin-bottom: 12px; color: #2a2620; }
+p:last-child { margin-bottom: 0; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 6px;
+  padding: 14px 18px;
+  margin: 16px 0;
+  font-size: 13px;
+}
+.callout-warn  { background: var(--yellow-bg); border-left: 3px solid #d4a030; }
+.callout-error { background: var(--red-bg);    border-left: 3px solid var(--accent); }
+.callout-ok    { background: var(--green-bg);  border-left: 3px solid var(--green); }
+.callout-info  { background: var(--blue-bg);   border-left: 3px solid var(--accent2); }
+.callout-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+.callout-warn  .callout-title { color: #a07020; }
+.callout-error .callout-title { color: var(--accent); }
+.callout-ok    .callout-title { color: var(--green); }
+.callout-info  .callout-title { color: var(--accent2); }
+
+/* ── CODE ── */
+pre, code {
+  font-family: 'IBM Plex Mono', monospace;
+}
+code {
+  background: rgba(0,0,0,0.06);
+  border: 1px solid var(--border);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 12px;
+  color: var(--accent);
+}
+pre {
+  background: var(--code-bg);
+  color: var(--code-text);
+  padding: 16px 20px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.7;
+  overflow-x: auto;
+  margin: 12px 0;
+  position: relative;
+}
+pre .comment { color: #606060; }
+pre .key     { color: #e8a060; }
+pre .val     { color: #80c890; }
+pre .url     { color: #70b0e0; }
+pre .method  { color: #d070d0; }
+pre .ok      { color: #60c860; }
+pre .err     { color: #e06060; }
+pre .hi      { color: #f0d060; }
+
+.copy-pre {
+  position: absolute;
+  top: 10px; right: 12px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #888;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.06em;
+}
+.copy-pre:hover { color: #ddd; background: rgba(255,255,255,0.14); }
+.copy-pre.copied { color: #60c860; }
+
+/* ── STEP LIST ── */
+.steps { list-style: none; padding: 0; }
+.steps li {
+  display: flex;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.steps li:last-child { border-bottom: none; }
+.step-n {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--text);
+  color: var(--bg);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.step-body { flex: 1; }
+.step-label {
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 3px;
+}
+.step-desc { font-size: 13px; color: var(--muted); }
+
+/* ── TABLE ── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 13px;
+}
+th {
+  background: var(--text);
+  color: var(--bg);
+  text-align: left;
+  padding: 8px 12px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+tr:nth-child(even) td { background: rgba(0,0,0,0.02); }
+td code { font-size: 11px; }
+
+/* ── DIAGNOSIS CARDS ── */
+.diag-grid { display: flex; flex-direction: column; gap: 12px; }
+.diag-card {
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.diag-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--red-bg);
+  border-bottom: 1px solid var(--red-border);
+  cursor: pointer;
+  user-select: none;
+}
+.diag-header.warn-bg { background: var(--yellow-bg); border-color: var(--yellow-border); }
+.diag-error {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 600;
+}
+.diag-error.warn { color: #a07020; }
+.diag-desc { font-size: 12px; color: var(--muted); margin-left: auto; }
+.diag-arrow { color: var(--muted); font-size: 10px; transition: transform 0.2s; }
+.diag-body {
+  padding: 16px;
+  display: none;
+  border-top: 1px solid var(--border);
+}
+.diag-body.open { display: block; }
+.diag-causes { margin-bottom: 12px; }
+.diag-cause {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+  padding: 4px 0;
+  color: var(--muted);
+}
+.diag-bullet { color: var(--accent); flex-shrink: 0; }
+
+/* ── ENDPOINT QUICK REF ── */
+.ep-group { margin-bottom: 20px; }
+.ep-group-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+.ep-row {
+  display: flex;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+  align-items: baseline;
+}
+.ep-method {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  letter-spacing: 0.04em;
+}
+.m-get    { background: #dcfce7; color: #166534; }
+.m-post   { background: #fef9c3; color: #854d0e; }
+.m-delete { background: #fee2e2; color: #991b1b; }
+.ep-path  { font-family: 'IBM Plex Mono', monospace; font-size: 11px; flex: 1; }
+.ep-param { color: #c8380a; }
+.ep-note  { font-size: 11px; color: var(--muted); }
+.ep-new   {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px;
+  background: rgba(200, 56, 10, 0.1);
+  color: var(--accent);
+  padding: 1px 5px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* ── FOOTER ── */
+footer {
+  background: var(--code-bg);
+  color: #5a5550;
+  padding: 28px 0;
+  margin-top: 60px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  text-align: center;
+}
+footer a { color: #7090b0; text-decoration: none; }
+
+/* ── PRINT ── */
+@media print {
+  header { background: #1a1814 !important; -webkit-print-color-adjust: exact; }
+  pre { background: #1a1814 !important; -webkit-print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-eyebrow">drop-zone-ops</div>
+    <div class="header-title">obs<span>-relay</span></div>
+    <div class="header-subtitle">Getting Started — Your first working setup in 15 minutes</div>
+    <div class="header-version">v1.2.0 · API + Prototyper GUI + Text Overlays</div>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="toc">
+    <div class="toc-title">Contents</div>
+    <ol>
+      <li><a href="#how-it-works">How it works</a></li>
+      <li><a href="#install">Install &amp; start the server</a></li>
+      <li><a href="#obs-setup">OBS setup (required)</a></li>
+      <li><a href="#first-test">Your first test</a></li>
+      <li><a href="#diagnose">Diagnose errors</a></li>
+      <li><a href="#gui">Using the GUI prototyper</a></li>
+      <li><a href="#playlists">Setting up playlists</a></li>
+      <li><a href="#overlays">Text overlays</a></li>
+      <li><a href="#endpoints">Endpoint quick reference</a></li>
+      <li><a href="#curl">cURL cheat sheet</a></li>
+    </ol>
+  </div>
+
+
+  <!-- ── 1. HOW IT WORKS ─────────────────────────────────────── -->
+  <section id="how-it-works">
+    <div class="section-num">Section 01</div>
+    <h2>How It Works</h2>
+
+    <p>obs-relay sits between your content — playlists, scripts, custom dashboards — and OBS Studio. It speaks OBS WebSocket 5.x internally and exposes a clean HTTP + WebSocket API that's easy to call from anything.</p>
+
+    <pre>Your App / GUI / Script
+        ↓  HTTP / WebSocket
+   obs-relay  (Python, port 8080)
+        ↓  OBS WebSocket 5.x (port 4455)
+   OBS Studio</pre>
+
+    <p>The GUI prototyper (<code>obs_relay_gui.html</code>) is just a browser page that calls this same API — every button you click generates the equivalent cURL command, so you can see exactly what to put in your own code.</p>
+
+    <div class="callout callout-info">
+      <div class="callout-title">Two ports, two different protocols</div>
+      <strong>Port 8080</strong> — obs-relay's own API. This is what you call.<br>
+      <strong>Port 4455</strong> — OBS's built-in WebSocket server. obs-relay calls this internally. You never touch it directly.
+    </div>
+  </section>
+
+
+  <!-- ── 2. INSTALL ─────────────────────────────────────────── -->
+  <section id="install">
+    <div class="section-num">Section 02</div>
+    <h2>Install &amp; Start the Server</h2>
+
+    <ul class="steps">
+      <li>
+        <div class="step-n">1</div>
+        <div class="step-body">
+          <div class="step-label">Clone or unzip the project</div>
+          <pre><button class="copy-pre" onclick="copyCode(this)">copy</button>cd obs-relay-v2</pre>
+        </div>
+      </li>
+      <li>
+        <div class="step-n">2</div>
+        <div class="step-body">
+          <div class="step-label">Install dependencies</div>
+          <pre><button class="copy-pre" onclick="copyCode(this)">copy</button>pip install -r requirements.txt</pre>
+          <div class="callout callout-warn" style="margin-top:8px;">
+            <div class="callout-title">Python 3.10+ required</div>
+            Check with <code>python3 --version</code>. The <code>match</code> statement used in the server requires 3.10 minimum.
+          </div>
+        </div>
+      </li>
+      <li>
+        <div class="step-n">3</div>
+        <div class="step-body">
+          <div class="step-label">Copy and edit config</div>
+          <pre><button class="copy-pre" onclick="copyCode(this)">copy</button>cp config.yaml.example config.yaml</pre>
+          <p style="margin-top:8px;font-size:13px;">Open <code>config.yaml</code> and set your OBS WebSocket password:</p>
+          <pre><span class="key">obs:</span>
+  <span class="key">host:</span> <span class="val">localhost</span>
+  <span class="key">port:</span> <span class="val">4455</span>
+  <span class="key">password:</span> <span class="val">"your-obs-password-here"</span></pre>
+        </div>
+      </li>
+      <li>
+        <div class="step-n">4</div>
+        <div class="step-body">
+          <div class="step-label">Test OBS connectivity before starting</div>
+          <pre><button class="copy-pre" onclick="copyCode(this)">copy</button>python run.py check --password your-obs-password</pre>
+          <p style="font-size:13px;margin-top:8px;">You should see your OBS version and scene list. If this fails, fix it before starting the server — see <a href="#obs-setup">Section 3</a>.</p>
+        </div>
+      </li>
+      <li>
+        <div class="step-n">5</div>
+        <div class="step-body">
+          <div class="step-label">Start the server</div>
+          <pre><button class="copy-pre" onclick="copyCode(this)">copy</button>python run.py start</pre>
+          <p style="font-size:13px;margin-top:6px;">You should see this startup output:</p>
+          <pre><span class="ok">✓ OBS</span>       localhost:4455 (connected)
+<span class="ok">✓ API</span>       http://0.0.0.0:8080
+<span class="ok">✓ WS</span>        ws://0.0.0.0:8080/ws
+<span class="ok">✓ Docs</span>      http://localhost:8080/docs</pre>
+          <div class="callout callout-warn" style="margin-top:8px;">
+            <div class="callout-title">If OBS shows "pending reconnect"</div>
+            The server still starts — it will reconnect automatically when OBS is available. But all <code>/obs/*</code> routes will return 503 until it connects.
+          </div>
+        </div>
+      </li>
+    </ul>
+  </section>
+
+
+  <!-- ── 3. OBS SETUP ────────────────────────────────────────── -->
+  <section id="obs-setup">
+    <div class="section-num">Section 03</div>
+    <h2>OBS Setup (Required)</h2>
+
+    <p>obs-relay controls OBS — it does <em>not</em> create anything inside OBS for you. You need to set up matching names in OBS first.</p>
+
+    <h3>3a — Enable OBS WebSocket</h3>
+    <ul class="steps">
+      <li>
+        <div class="step-n">1</div>
+        <div class="step-body">
+          <div class="step-label">Open OBS → Tools → WebSocket Server Settings</div>
+          <div class="step-desc">Make sure "Enable WebSocket server" is checked. Server port should be 4455.</div>
+        </div>
+      </li>
+      <li>
+        <div class="step-n">2</div>
+        <div class="step-body">
+          <div class="step-label">Set a password (recommended)</div>
+          <div class="step-desc">Check "Enable Authentication" and set a password. Copy this to <code>config.yaml</code> → <code>obs.password</code>.</div>
+        </div>
+      </li>
+    </ul>
+
+    <h3>3b — Create required scenes</h3>
+    <p>The built-in presets expect these <strong>exact scene names</strong> in OBS. Create them in your OBS Scenes panel:</p>
+
+    <table>
+      <tr><th>OBS Scene Name</th><th>Preset</th><th>Purpose</th></tr>
+      <tr><td><code>Live</code></td><td>live</td><td>Main broadcast content</td></tr>
+      <tr><td><code>BRB</code></td><td>brb</td><td>Be Right Back screen</td></tr>
+      <tr><td><code>Standby</code></td><td>standby</td><td>Holding / pre-show screen</td></tr>
+      <tr><td><code>Intermission</code></td><td>intermission</td><td>Break content loop</td></tr>
+      <tr><td><code>EndCard</code></td><td>end_card</td><td>Post-show slate</td></tr>
+    </table>
+
+    <div class="callout callout-error">
+      <div class="callout-title">Names are case-sensitive and must match exactly</div>
+      If your OBS scene is named <code>brb</code> (lowercase) but the preset expects <code>BRB</code>, you'll get an error. Either rename the scene in OBS, or update the preset config in <code>config.yaml</code> under <code>scenes.presets</code>.
+    </div>
+
+    <p>You <strong>don't need all five scenes</strong> to start. Create just <code>Live</code> first and verify that works. Add the others as needed.</p>
+
+    <h3>3c — Create a Media Source (for playlists)</h3>
+    <p>If you want to use playlists to play video files through OBS:</p>
+    <ul class="steps">
+      <li>
+        <div class="step-n">1</div>
+        <div class="step-body">
+          <div class="step-label">In OBS, open your Live scene → Sources → Add → Media Source</div>
+          <div class="step-desc">Name it exactly <code>MediaSource</code> (or change <code>playlist.source_name</code> in config.yaml to match whatever you name it)</div>
+        </div>
+      </li>
+      <li>
+        <div class="step-n">2</div>
+        <div class="step-body">
+          <div class="step-label">Uncheck "Local File" for now — obs-relay will set the file path at runtime</div>
+          <div class="step-desc">Leave Loop unchecked. obs-relay manages advancement via the <code>MediaInputPlaybackEnded</code> event.</div>
+        </div>
+      </li>
+    </ul>
+
+    <h3>3d — Create a Text Source (for overlays)</h3>
+    <p>For title card overlays — only needed if you want to use the overlay system:</p>
+    <ul class="steps">
+      <li>
+        <div class="step-n">1</div>
+        <div class="step-body">
+          <div class="step-label">Sources → Add → Text (GDI+) on Windows, Text (FreeType 2) on Mac/Linux</div>
+          <div class="step-desc">Name it exactly <code>TitleOverlay</code></div>
+        </div>
+      </li>
+      <li>
+        <div class="step-n">2</div>
+        <div class="step-body">
+          <div class="step-label">Click the eye icon to hide it — it must start hidden</div>
+          <div class="step-desc">obs-relay shows/hides it via the visibility toggle. If it starts visible, overlays won't "appear" — they'll already be on screen.</div>
+        </div>
+      </li>
+      <li>
+        <div class="step-n">3</div>
+        <div class="step-body">
+          <div class="step-label">Style it however you want — font, size, color, position, background</div>
+          <div class="step-desc">obs-relay only sets the text content and visibility. Layout is entirely yours.</div>
+        </div>
+      </li>
+    </ul>
+  </section>
+
+
+  <!-- ── 4. FIRST TEST ───────────────────────────────────────── -->
+  <section id="first-test">
+    <div class="section-num">Section 04</div>
+    <h2>Your First Test</h2>
+
+    <p>With the server running and OBS open, verify things work in this exact order:</p>
+
+    <h3>Test 1 — Is the server reachable?</h3>
+    <pre><button class="copy-pre" onclick="copyCode(this)">copy</button>curl http://localhost:8080/health</pre>
+    <p>Expected response:</p>
+    <pre>{
+  <span class="key">"status"</span>: <span class="val">"ok"</span>,
+  <span class="key">"obs_connected"</span>: <span class="ok">true</span>,
+  <span class="key">"ws_clients"</span>: <span class="val">0</span>,
+  <span class="key">"version"</span>: <span class="val">"1.2.0"</span>
+}</pre>
+
+    <div class="callout callout-error">
+      <div class="callout-title">Getting "connection refused" instead?</div>
+      The server is not running. Go back to Section 2 and start it with <code>python run.py start</code>.
+    </div>
+
+    <h3>Test 2 — Is OBS connected?</h3>
+    <p>Check <code>"obs_connected"</code> in the health response. If it's <code>false</code>:</p>
+    <pre><button class="copy-pre" onclick="copyCode(this)">copy</button>python run.py check</pre>
+    <p>This tells you exactly what's wrong — wrong password, wrong port, OBS not open, etc.</p>
+
+    <h3>Test 3 — List your scenes</h3>
+    <pre><button class="copy-pre" onclick="copyCode(this)">copy</button>curl http://localhost:8080/obs/scenes</pre>
+    <p>You should see your actual OBS scenes listed. <strong>Note the exact names — they're case-sensitive.</strong> Any preset you call must match a name in this list.</p>
+
+    <h3>Test 4 — Switch to a scene directly (no preset)</h3>
+    <p>Replace <code>YourSceneName</code> with one of the names from Test 3:</p>
+    <pre><button class="copy-pre" onclick="copyCode(this)">copy</button>curl -X POST http://localhost:8080/obs/scene/YourSceneName</pre>
+    <p>If this works but presets don't, the issue is a scene name mismatch — your preset's <code>scene_name</code> doesn't match what OBS has.</p>
+
+    <h3>Test 5 — Try a preset</h3>
+    <p>Only after scene switching works directly:</p>
+    <pre><button class="copy-pre" onclick="copyCode(this)">copy</button>curl -X POST http://localhost:8080/presets/live/activate</pre>
+    <p>Expected response includes <code>"preset": "live"</code> and a list of actions taken.</p>
+  </section>
+
+
+  <!-- ── 5. DIAGNOSE ─────────────────────────────────────────── -->
+  <section id="diagnose">
+    <div class="section-num">Section 05</div>
+    <h2>Diagnose Errors</h2>
+
+    <p>Click any error message to expand the cause and fix.</p>
+
+    <div class="diag-grid">
+
+      <div class="diag-card">
+        <div class="diag-header" onclick="toggleDiag(this)">
+          <span class="diag-error">{"detail": "Not Found"}</span>
+          <span class="diag-desc">404 from any endpoint</span>
+          <span class="diag-arrow">▼</span>
+        </div>
+        <div class="diag-body">
+          <div class="diag-causes">
+            <div class="diag-cause"><span class="diag-bullet">→</span> <div>The URL path is wrong. Check for typos — all paths are lowercase with hyphens, not underscores. Example: <code>/playlists/auto-advance</code> not <code>/playlists/auto_advance</code></div></div>
+            <div class="diag-cause"><span class="diag-bullet">→</span> <div>You're using GET on a POST endpoint or vice versa. Check the method in the endpoint reference (Section 9).</div></div>
+            <div class="diag-cause"><span class="diag-bullet">→</span> <div>The route parameter is in the wrong place. <code>/obs/scene/Live</code> works. <code>/obs/scene?name=Live</code> does not.</div></div>
+          </div>
+          <p><strong>Quick check:</strong> open <code>http://localhost:8080/docs</code> in your browser. FastAPI auto-generates a full interactive endpoint list. If your path isn't there, it doesn't exist.</p>
+        </div>
+      </div>
+
+      <div class="diag-card">
+        <div class="diag-header" onclick="toggleDiag(this)">
+          <span class="diag-error">{"detail": "OBS not connected"} or 503</span>
+          <span class="diag-desc">OBS WebSocket link is down</span>
+          <span class="diag-arrow">▼</span>
+        </div>
+        <div class="diag-body">
+          <div class="diag-causes">
+            <div class="diag-cause"><span class="diag-bullet">→</span> <div>OBS is not open. Open OBS Studio first.</div></div>
+            <div class="diag-cause"><span class="diag-bullet">→</span> <div>Wrong password in <code>config.yaml</code>. Check <code>obs.password</code> matches OBS → Tools → WebSocket Server Settings exactly.</div></div>
+            <div class="diag-cause"><span class="diag-bullet">→</span> <div>Wrong port. Default is 4455 since OBS 28. Older OBS versions used 4444 with a different plugin.</div></div>
+            <div class="diag-cause"><span class="diag-bullet">→</span> <div>OBS WebSocket is disabled. Go to OBS → Tools → WebSocket Server Settings and make sure "Enable WebSocket server" is checked.</div></div>
+          </div>
+          <pre><button class="copy-pre" onclick="copyCode(this)">copy</button><span class="comment"># Run the connection check tool</span>
+python run.py check --password your-password
+<span class="comment"># Or test manually</span>
+curl http://localhost:8080/health</pre>
+        </div>
+      </div>
+
+      <div class="diag-card">
+        <div class="diag-header" onclick="toggleDiag(this)">
+          <span class="diag-error">{"detail": "Preset 'live' not found"}</span>
+          <span class="diag-desc">Preset activation fails</span>
+          <span class="diag-arrow">▼</span>
+        </div>
+        <div class="diag-body">
+          <div class="diag-causes">
+            <div class="diag-cause"><span class="diag-bullet">→</span> <div>The preset name doesn't exist. Valid built-in presets: <code>live</code>, <code>brb</code>, <code>standby</code>, <code>intermission</code>, <code>end_card</code>. All lowercase.</div></div>
+          </div>
+          <pre><button class="copy-pre" onclick="copyCode(this)">copy</button><span class="comment"># See all registered presets</span>
+curl http://localhost:8080/presets</pre>
+        </div>
+      </div>
+
+      <div class="diag-card">
+        <div class="diag-header" onclick="toggleDiag(this)">
+          <span class="diag-error">Preset activates but scene doesn't switch in OBS</span>
+          <span class="diag-desc">Scene name mismatch</span>
+          <span class="diag-arrow">▼</span>
+        </div>
+        <div class="diag-body">
+          <div class="diag-causes">
+            <div class="diag-cause"><span class="diag-bullet">→</span> <div>The preset's <code>scene_name</code> doesn't match any scene in OBS. The <code>live</code> preset tries to switch to a scene called <code>"Live"</code> — capital L. If your OBS scene is called <code>"live"</code> or <code>"LIVE"</code>, it will fail silently.</div></div>
+          </div>
+          <pre><button class="copy-pre" onclick="copyCode(this)">copy</button><span class="comment"># Check exact scene names in OBS</span>
+curl http://localhost:8080/obs/scenes
+
+<span class="comment"># Then switch directly to verify the name works</span>
+curl -X POST http://localhost:8080/obs/scene/ExactNameHere</pre>
+          <p style="margin-top:10px;font-size:13px;">If the direct switch works but the preset doesn't, edit the preset's <code>scene_name</code> in <code>config.yaml</code> under <code>scenes.presets</code> to match.</p>
+        </div>
+      </div>
+
+      <div class="diag-card">
+        <div class="diag-header warn-bg" onclick="toggleDiag(this)">
+          <span class="diag-error warn">{"detail": "Playlist manager not initialized"}</span>
+          <span class="diag-desc">Playlist endpoints return 503</span>
+          <span class="diag-arrow">▼</span>
+        </div>
+        <div class="diag-body">
+          <div class="diag-causes">
+            <div class="diag-cause"><span class="diag-bullet">→</span> <div>This normally shouldn't happen if the server started correctly. Try restarting with <code>python run.py start</code> and check the startup log for errors.</div></div>
+            <div class="diag-cause"><span class="diag-bullet">→</span> <div>The <code>playlists/</code> directory doesn't exist. Create it: <code>mkdir playlists</code></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diag-card">
+        <div class="diag-header warn-bg" onclick="toggleDiag(this)">
+          <span class="diag-error warn">Playlist activates but video doesn't play in OBS</span>
+          <span class="diag-desc">Media source not set up correctly</span>
+          <span class="diag-arrow">▼</span>
+        </div>
+        <div class="diag-body">
+          <div class="diag-causes">
+            <div class="diag-cause"><span class="diag-bullet">→</span> <div>The OBS source is not named <code>MediaSource</code>. Check the source name in OBS and set <code>playlist.source_name</code> in config.yaml to match.</div></div>
+            <div class="diag-cause"><span class="diag-bullet">→</span> <div>The file paths in your .m3u file don't exist on the machine running OBS. Run <code>python run.py validate-playlists</code> to check every path.</div></div>
+            <div class="diag-cause"><span class="diag-bullet">→</span> <div>The media source is not in the current active scene. OBS sources are per-scene — the MediaSource must be in the scene you've switched to.</div></div>
+          </div>
+          <pre><button class="copy-pre" onclick="copyCode(this)">copy</button><span class="comment"># Check file paths in your playlists</span>
+python run.py validate-playlists
+
+<span class="comment"># Check media source status</span>
+curl http://localhost:8080/obs/source/MediaSource/media</pre>
+        </div>
+      </div>
+
+      <div class="diag-card">
+        <div class="diag-header warn-bg" onclick="toggleDiag(this)">
+          <span class="diag-error warn">Overlay triggers but nothing shows in OBS</span>
+          <span class="diag-desc">TitleOverlay source not found or wrong scene</span>
+          <span class="diag-arrow">▼</span>
+        </div>
+        <div class="diag-body">
+          <div class="diag-causes">
+            <div class="diag-cause"><span class="diag-bullet">→</span> <div>No source named <code>TitleOverlay</code> exists in OBS. See Section 3d to create it.</div></div>
+            <div class="diag-cause"><span class="diag-bullet">→</span> <div>The source exists in a different scene than the current program scene. Either add it to the current scene or set <code>overlay.scene_name</code> in config.yaml to the exact scene name that has it.</div></div>
+            <div class="diag-cause"><span class="diag-bullet">→</span> <div>Case sensitivity: <code>TitleOverlay</code> ≠ <code>titleoverlay</code>. Must match exactly.</div></div>
+          </div>
+          <pre><button class="copy-pre" onclick="copyCode(this)">copy</button><span class="comment"># Check overlay status</span>
+curl http://localhost:8080/overlay/status
+
+<span class="comment"># Manually trigger with explicit text to test</span>
+curl -X POST http://localhost:8080/overlay/trigger \
+  -H "Content-Type: application/json" \
+  -d '{"text": "TEST OVERLAY", "hold_sec": 30, "delay_sec": 0}'</pre>
+          <p style="margin-top:10px;font-size:13px;">If the status shows <code>"active": true</code> and text is set but nothing appears in OBS, the source name or scene name is wrong.</p>
+        </div>
+      </div>
+
+      <div class="diag-card">
+        <div class="diag-header warn-bg" onclick="toggleDiag(this)">
+          <span class="diag-error warn">401 Unauthorized or 403 Forbidden</span>
+          <span class="diag-desc">API key required</span>
+          <span class="diag-arrow">▼</span>
+        </div>
+        <div class="diag-body">
+          <div class="diag-causes">
+            <div class="diag-cause"><span class="diag-bullet">→</span> <div>You set an <code>api_key</code> in config.yaml but aren't sending it in requests.</div></div>
+          </div>
+          <pre><button class="copy-pre" onclick="copyCode(this)">copy</button><span class="comment"># Add to all REST requests:</span>
+curl -H "Authorization: Bearer YOUR_KEY" \
+  http://localhost:8080/obs/scenes
+
+<span class="comment"># WebSocket with auth:</span>
+ws://localhost:8080/ws?token=YOUR_KEY</pre>
+          <p style="margin-top:10px;font-size:13px;">In the GUI prototyper: enter your key in the "API key" field in the sidebar before clicking Connect.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ── 6. GUI ──────────────────────────────────────────────── -->
+  <section id="gui">
+    <div class="section-num">Section 06</div>
+    <h2>Using the GUI Prototyper</h2>
+
+    <p>Open <code>obs_relay_gui.html</code> directly in your browser — no web server needed.</p>
+
+    <ul class="steps">
+      <li>
+        <div class="step-n">1</div>
+        <div class="step-body">
+          <div class="step-label">Set the server URL in the sidebar</div>
+          <div class="step-desc">Default is <code>http://localhost:8080</code>. If obs-relay is on another machine, enter its IP address. If you set an API key, enter it in the "API key" field.</div>
+        </div>
+      </li>
+      <li>
+        <div class="step-n">2</div>
+        <div class="step-body">
+          <div class="step-label">Click Connect</div>
+          <div class="step-desc">This tests the HTTP connection and auto-connects the WebSocket. You'll see green dots when both are live.</div>
+        </div>
+      </li>
+      <li>
+        <div class="step-n">3</div>
+        <div class="step-body">
+          <div class="step-label">Every button generates a cURL command</div>
+          <div class="step-desc">The right panel shows the cURL equivalent of every action you take. Use this to build your own integration — copy the command and paste it into your script, Postman collection, or documentation.</div>
+        </div>
+      </li>
+      <li>
+        <div class="step-n">4</div>
+        <div class="step-body">
+          <div class="step-label">Watch the WebSocket panel</div>
+          <div class="step-desc">Go to the WebSocket Relay section. Click "Connect WS". Every OBS event — scene changes, track advances, overlay triggers — shows up here in real time, including changes you make directly in the OBS UI.</div>
+        </div>
+      </li>
+      <li>
+        <div class="step-n">5</div>
+        <div class="step-body">
+          <div class="step-label">Run a Demo Workflow</div>
+          <div class="step-desc">Go to Demo Workflows and run "Broadcast Show Launch". It will walk through a full startup sequence and show you exactly which calls succeed and which fail, so you can see what still needs to be set up in OBS.</div>
+        </div>
+      </li>
+    </ul>
+
+    <div class="callout callout-info">
+      <div class="callout-title">The GUI is just a test tool — not required to use the API</div>
+      Everything in the GUI is an HTTP call to obs-relay. Your real integration — a custom dashboard, a show control script, a hardware controller — makes the same calls with the same cURL commands shown in the right panel.
+    </div>
+  </section>
+
+
+  <!-- ── 7. PLAYLISTS ────────────────────────────────────────── -->
+  <section id="playlists">
+    <div class="section-num">Section 07</div>
+    <h2>Setting Up Playlists</h2>
+
+    <p>Playlists are standard <code>.m3u</code> files in the <code>playlists/</code> folder. Each file becomes a named playlist. obs-relay loads all <code>.m3u</code> files on startup.</p>
+
+    <h3>Minimal playlist</h3>
+    <pre>#EXTM3U
+
+#EXTINF:3600,Episode 01
+/absolute/path/to/episode01.mp4
+
+#EXTINF:1800,Episode 02
+/absolute/path/to/episode02.mp4</pre>
+
+    <div class="callout callout-warn">
+      <div class="callout-title">File paths must be absolute on the OBS machine</div>
+      Relative paths don't work. OBS needs the full path to load the file. On Windows: <code>C:\Media\episode01.mp4</code>. On Mac/Linux: <code>/Users/you/Media/episode01.mp4</code>
+    </div>
+
+    <h3>Check your paths before going live</h3>
+    <pre><button class="copy-pre" onclick="copyCode(this)">copy</button>python run.py validate-playlists</pre>
+    <p>This checks every file path in every playlist and tells you what's missing.</p>
+
+    <h3>Playlist with overlay tags</h3>
+    <pre>#EXTM3U
+
+#EXTINF:3600,Episode 01 — The Pilot
+<span class="hi">#EXTOVERLAY:text=Now Playing: Episode One</span>   <span class="comment">← custom text</span>
+<span class="hi">#EXTOVERLAY:hold=10</span>                          <span class="comment">← 10 seconds visible</span>
+/media/ep01.mp4
+
+#EXTINF:30,Station ID
+<span class="hi">#EXTOVERLAY:skip=1</span>                           <span class="comment">← no overlay for this track</span>
+/media/bumper.mp4
+
+#EXTINF:3600,Episode 02 — The Return
+<span class="hi">#EXTOVERLAY:delay=5</span>                          <span class="comment">← wait 5s before showing</span>
+/media/ep02.mp4</pre>
+
+    <h3>Key playlist endpoints</h3>
+    <pre><button class="copy-pre" onclick="copyCode(this)">copy</button><span class="comment"># Load and start a playlist</span>
+curl -X POST http://localhost:8080/playlists/main/activate
+
+<span class="comment"># Next track</span>
+curl -X POST http://localhost:8080/playlists/next
+
+<span class="comment"># Jump to track 3 (0-indexed)</span>
+curl -X POST http://localhost:8080/playlists/seek/3
+
+<span class="comment"># Check current status</span>
+curl http://localhost:8080/playlists/status</pre>
+  </section>
+
+
+  <!-- ── 8. OVERLAYS ─────────────────────────────────────────── -->
+  <section id="overlays">
+    <div class="section-num">Section 08</div>
+    <h2>Text Overlays</h2>
+
+    <p>The overlay system shows timed title cards driven by playlist track changes. When a track starts, obs-relay reads the M3U metadata and automatically shows/hides the <code>TitleOverlay</code> source on the configured timing.</p>
+
+    <h3>How the timing works</h3>
+    <pre>Track starts playing
+  ↓  [delay_sec — default: 1s]
+Overlay text is set + source becomes visible
+  ↓  [hold_sec — default: 8s]
+Source becomes hidden again
+  ↓  Overlay done. Stays hidden until next track.</pre>
+
+    <h3>Testing overlays</h3>
+    <pre><button class="copy-pre" onclick="copyCode(this)">copy</button><span class="comment"># Trigger a 30-second test overlay with no delay</span>
+curl -X POST http://localhost:8080/overlay/trigger \
+  -H "Content-Type: application/json" \
+  -d '{"text": "TEST — Is This Working?", "hold_sec": 30, "delay_sec": 0}'
+
+<span class="comment"># Check if it's active</span>
+curl http://localhost:8080/overlay/status
+
+<span class="comment"># Hide it</span>
+curl -X POST http://localhost:8080/overlay/hide</pre>
+
+    <h3>Changing timing at runtime</h3>
+    <pre><button class="copy-pre" onclick="copyCode(this)">copy</button><span class="comment"># Set global defaults: 12s hold, 2s delay, "Now Playing: " prefix</span>
+curl -X POST http://localhost:8080/overlay/config \
+  -H "Content-Type: application/json" \
+  -d '{"hold_sec": 12, "delay_sec": 2, "prefix": "Now Playing: "}'</pre>
+
+    <h3>Re-show current track without losing position</h3>
+    <pre><button class="copy-pre" onclick="copyCode(this)">copy</button><span class="comment"># Safe to call anytime — reads current PlaylistItem metadata</span>
+curl -X POST http://localhost:8080/overlay/trigger-current</pre>
+
+    <div class="callout callout-info">
+      <div class="callout-title">Position safety — how it works</div>
+      The overlay manager reads <code>PlaylistItem.metadata</code> at the moment a track fires, not at startup. This means no matter how many times you call next/prev/seek, the metadata for each track is always correct. Advancing the playlist never desynchronizes the overlay.
+    </div>
+
+    <div class="callout callout-warn">
+      <div class="callout-title">Fade in / fade out requires an OBS filter</div>
+      obs-relay shows/hides the source instantly at the OS level. For a smooth visual fade, right-click the <code>TitleOverlay</code> source in OBS → <strong>Transition Override</strong> → set a Fade with your desired duration. OBS will then animate it automatically on every show/hide.
+    </div>
+  </section>
+
+
+  <!-- ── 9. ENDPOINTS ────────────────────────────────────────── -->
+  <section id="endpoints">
+    <div class="section-num">Section 09</div>
+    <h2>Endpoint Quick Reference</h2>
+
+    <p>All endpoints are prefixed with your server address, e.g. <code>http://localhost:8080</code>. Interactive docs always available at <code>/docs</code>.</p>
+
+    <div class="ep-group">
+      <div class="ep-group-label">System</div>
+      <div class="ep-row"><span class="ep-method m-get">GET</span><span class="ep-path">/health</span><span class="ep-note">OBS connected, WS clients, version</span></div>
+      <div class="ep-row"><span class="ep-method m-get">GET</span><span class="ep-path">/healthz</span><span class="ep-note">Returns 503 when OBS disconnected — use for monitoring</span></div>
+      <div class="ep-row"><span class="ep-method m-get">GET</span><span class="ep-path">/obs/version</span><span class="ep-note">OBS Studio + WebSocket version</span></div>
+    </div>
+
+    <div class="ep-group">
+      <div class="ep-group-label">Scenes</div>
+      <div class="ep-row"><span class="ep-method m-get">GET</span><span class="ep-path">/obs/scenes</span><span class="ep-note">All scenes in OBS</span></div>
+      <div class="ep-row"><span class="ep-method m-get">GET</span><span class="ep-path">/obs/scene/current</span><span class="ep-note">Active program scene</span></div>
+      <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/obs/scene/<span class="ep-param">{scene_name}</span></span><span class="ep-note">Switch to scene directly</span></div>
+      <div class="ep-row"><span class="ep-method m-get">GET</span><span class="ep-path">/obs/transition</span><span class="ep-note">Current transition name + duration</span></div>
+      <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/obs/transition</span><span class="ep-note">Set transition — body: <code>{"name":"Fade","duration_ms":500}</code></span></div>
+    </div>
+
+    <div class="ep-group">
+      <div class="ep-group-label">Presets</div>
+      <div class="ep-row"><span class="ep-method m-get">GET</span><span class="ep-path">/presets</span><span class="ep-note">All registered presets</span></div>
+      <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/presets/<span class="ep-param">{name}</span>/activate</span><span class="ep-note">Switch scene + run side effects</span></div>
+    </div>
+
+    <div class="ep-group">
+      <div class="ep-group-label">Playlists</div>
+      <div class="ep-row"><span class="ep-method m-get">GET</span><span class="ep-path">/playlists</span><span class="ep-note">All loaded playlists with track lists</span></div>
+      <div class="ep-row"><span class="ep-method m-get">GET</span><span class="ep-path">/playlists/status</span><span class="ep-note">Active playlist, position, current track</span></div>
+      <div class="ep-row"><span class="ep-method m-get">GET</span><span class="ep-path">/playlists/validate</span><span class="ep-note">Preflight check — all files exist on disk</span></div>
+      <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/playlists/<span class="ep-param">{name}</span>/activate</span><span class="ep-note">Start playlist at position (add <code>?position=3</code> to seek)</span></div>
+      <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/playlists/next</span><span class="ep-note">Advance one track</span></div>
+      <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/playlists/prev</span><span class="ep-note">Go back one track</span></div>
+      <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/playlists/seek/<span class="ep-param">{position}</span></span><span class="ep-note">Jump to track index (0-based)</span></div>
+      <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/playlists/auto-advance</span><span class="ep-note">Toggle auto-advance — body: <code>{"enabled": true}</code></span></div>
+      <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/playlists/create</span><span class="ep-note">Build playlist from file paths</span></div>
+      <div class="ep-row"><span class="ep-method m-delete">DEL</span><span class="ep-path">/playlists/<span class="ep-param">{name}</span></span><span class="ep-note">Remove playlist from memory + disk</span></div>
+    </div>
+
+    <div class="ep-group">
+      <div class="ep-group-label">Text Overlays <span class="ep-new">v1.2</span></div>
+      <div class="ep-row"><span class="ep-method m-get">GET</span><span class="ep-path">/overlay/status</span><span class="ep-note">Active, text, timer remaining, config</span></div>
+      <div class="ep-row"><span class="ep-method m-get">GET</span><span class="ep-path">/overlay/config</span><span class="ep-note">All current settings</span></div>
+      <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/overlay/config</span><span class="ep-note">Update settings — only pass fields to change</span></div>
+      <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/overlay/trigger</span><span class="ep-note">Show any text — body: <code>{"text":"…","hold_sec":8}</code></span></div>
+      <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/overlay/trigger-current</span><span class="ep-note">Re-show current track title from M3U metadata</span></div>
+      <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/overlay/hide</span><span class="ep-note">Cancel timer and hide immediately</span></div>
+    </div>
+
+    <div class="ep-group">
+      <div class="ep-group-label">Audio</div>
+      <div class="ep-row"><span class="ep-method m-get">GET</span><span class="ep-path">/obs/source/<span class="ep-param">{name}</span>/media</span><span class="ep-note">Media source state, cursor, duration</span></div>
+      <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/obs/source/<span class="ep-param">{name}</span>/volume</span><span class="ep-note">Set volume dB — body: <code>{"volume_db": -6}</code></span></div>
+      <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/obs/source/<span class="ep-param">{name}</span>/mute</span><span class="ep-note">Mute — body: <code>{"muted": true}</code></span></div>
+    </div>
+
+    <div class="ep-group">
+      <div class="ep-group-label">Streaming</div>
+      <div class="ep-row"><span class="ep-method m-get">GET</span><span class="ep-path">/obs/stream/status</span><span class="ep-note">Active, timecode, bytes sent</span></div>
+      <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/obs/stream/start</span><span class="ep-note">Begin streaming</span></div>
+      <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/obs/stream/stop</span><span class="ep-note">Stop streaming</span></div>
+    </div>
+
+    <div class="ep-group">
+      <div class="ep-group-label">Recording <span class="ep-new">v1.1</span></div>
+      <div class="ep-row"><span class="ep-method m-get">GET</span><span class="ep-path">/obs/record/status</span><span class="ep-note">Active, paused, timecode, bytes</span></div>
+      <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/obs/record/start</span><span class="ep-note">Start recording</span></div>
+      <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/obs/record/stop</span><span class="ep-note">Stop — response includes output file path</span></div>
+      <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/obs/record/pause</span><span class="ep-note">Pause</span></div>
+      <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/obs/record/resume</span><span class="ep-note">Resume</span></div>
+    </div>
+
+    <div class="ep-group">
+      <div class="ep-group-label">Realtime</div>
+      <div class="ep-row"><span class="ep-method m-get">GET</span><span class="ep-path">/ws</span><span class="ep-note">WebSocket endpoint — connect with <code>ws://host:8080/ws</code></span></div>
+      <div class="ep-row"><span class="ep-method m-get">GET</span><span class="ep-path">/osc/status</span><span class="ep-note">TouchOSC bridge status</span></div>
+    </div>
+  </section>
+
+
+  <!-- ── 10. CURL ─────────────────────────────────────────────── -->
+  <section id="curl">
+    <div class="section-num">Section 10</div>
+    <h2>cURL Cheat Sheet</h2>
+
+    <p>Every example below works as-is. Replace <code>localhost:8080</code> with your server address.</p>
+
+    <h3>Basic pattern</h3>
+    <pre><span class="comment"># GET request</span>
+curl <span class="url">http://localhost:8080/health</span>
+
+<span class="comment"># POST with no body</span>
+curl <span class="method">-X POST</span> <span class="url">http://localhost:8080/obs/stream/start</span>
+
+<span class="comment"># POST with JSON body</span>
+curl <span class="method">-X POST</span> <span class="url">http://localhost:8080/obs/transition</span> \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Fade", "duration_ms": 500}'
+
+<span class="comment"># With auth token</span>
+curl <span class="method">-H "Authorization: Bearer YOUR_KEY"</span> \
+  <span class="url">http://localhost:8080/obs/scenes</span></pre>
+
+    <h3>Complete flow — broadcast startup</h3>
+    <pre><button class="copy-pre" onclick="copyCode(this)">copy</button><span class="comment"># 1. Validate playlists</span>
+curl http://localhost:8080/playlists/validate
+
+<span class="comment"># 2. Standby screen</span>
+curl -X POST http://localhost:8080/presets/standby/activate
+
+<span class="comment"># 3. Load main playlist from track 0</span>
+curl -X POST http://localhost:8080/playlists/main/activate
+
+<span class="comment"># 4. Set fade transition</span>
+curl -X POST http://localhost:8080/obs/transition \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Fade", "duration_ms": 300}'
+
+<span class="comment"># 5. Go live</span>
+curl -X POST http://localhost:8080/presets/live/activate
+
+<span class="comment"># 6. Start stream</span>
+curl -X POST http://localhost:8080/obs/stream/start</pre>
+
+    <h3>Overlay — show title card for current track</h3>
+    <pre><button class="copy-pre" onclick="copyCode(this)">copy</button><span class="comment"># Configure: 10s hold, 2s delay, prefix</span>
+curl -X POST http://localhost:8080/overlay/config \
+  -H "Content-Type: application/json" \
+  -d '{"hold_sec": 10, "delay_sec": 2, "prefix": "Now Playing: "}'
+
+<span class="comment"># Trigger from current track metadata</span>
+curl -X POST http://localhost:8080/overlay/trigger-current
+
+<span class="comment"># Manual override — pop-up ad</span>
+curl -X POST http://localhost:8080/overlay/trigger \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Visit us at example.com", "hold_sec": 12, "delay_sec": 0}'
+
+<span class="comment"># Force hide</span>
+curl -X POST http://localhost:8080/overlay/hide</pre>
+
+    <h3>WebSocket (wscat)</h3>
+    <pre><button class="copy-pre" onclick="copyCode(this)">copy</button><span class="comment"># Install: npm install -g wscat</span>
+wscat -c ws://localhost:8080/ws
+
+<span class="comment"># With auth</span>
+wscat -c "ws://localhost:8080/ws?token=YOUR_KEY"
+
+<span class="comment"># Then send commands as JSON:</span>
+{"cmd": "get_status"}
+{"cmd": "playlist_next"}
+{"cmd": "overlay_trigger", "params": {"text": "Hello", "hold_sec": 8}}
+{"cmd": "activate_preset", "params": {"name": "live"}}</pre>
+
+    <div class="callout callout-ok">
+      <div class="callout-title">Interactive docs at /docs</div>
+      FastAPI generates a full Swagger UI at <code>http://localhost:8080/docs</code> — you can test every endpoint there without writing any cURL at all.
+    </div>
+  </section>
+
+</div><!-- /container -->
+
+<footer>
+  obs-relay v1.2.0 · drop-zone-ops ecosystem ·
+  <a href="http://localhost:8080/docs">localhost:8080/docs</a>
+</footer>
+
+<script>
+function toggleDiag(header) {
+  const body = header.nextElementSibling;
+  const arrow = header.querySelector('.diag-arrow');
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  arrow.textContent = isOpen ? '▼' : '▲';
+}
+
+function copyCode(btn) {
+  const pre = btn.parentElement;
+  // Get text excluding the button's own text
+  const text = Array.from(pre.childNodes)
+    .filter(n => n.nodeType === Node.TEXT_NODE || (n.tagName && n.tagName !== 'BUTTON'))
+    .map(n => n.textContent)
+    .join('').trim();
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// Open first diag by default
+document.querySelector('.diag-header').click();
+</script>
+</body>
+</html>
