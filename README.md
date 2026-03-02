@@ -11,9 +11,9 @@
 
 ## What it does
 
-obs-relay sits between your control surfaces and OBS Studio. It exposes a REST API and WebSocket endpoint that any device on your network can call to control OBS — switch scenes, manage video playlists, start/stop streams, control audio, and more.
+_obs-relay_ sits between your control surfaces and OBS Studio. It exposes a REST API and WebSocket endpoint that any device on your network can call to control OBS — switch scenes, manage video playlists, start/stop streams, control audio, and more.
 
-Think of it as a **Pluto.tv-style channel controller**: define playlists of video files, name each broadcast state (Live, BRB, Standby, Intermission), and switch between them from a phone, tablet, custom controller, or automation script.
+The codebase is also bundled with an API explorer. Think of it as a **Pluto.tv-style channel controller**: define playlists of video files, name each broadcast state (Live, BRB, Standby, Intermission), and switch between them from a phone, tablet, custom controller, or automation script.
 
 ```
                    ┌─────────────────────┐
